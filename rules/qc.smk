@@ -1,99 +1,52 @@
-# Copyright 2018 Johannes Köster.
-# Licensed under the MIT license (http://opensource.org/licenses/MIT)
-# This file may not be copied, modified, or distributed
-# except according to those terms.
+rule qc_plot:
+	input:
+		path.join(config['dir']['data'],'{cancer}_{celltype}_merged.rds')
+	params:
+		config['dir']['qc']
+	output:
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_mito_ribo_perc.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nCount_5Kmax.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nFeature.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nGenePerUMI.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_mitoRatio.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_riboRatio.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_nFeature.jpg')
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_nFeature_perSample.jpg')
+	script:
+		"../scripts/qc_plot.R"
 
 
-rule qc:
-    input:
-        "analysis/all.rds"
-    output:
-        libsizes=report("plots/library-size.pdf",
-                        caption="../report/library-size.rst",
-                        category="Quality Control"),
-        expressed=report("plots/expressed-genes.pdf",
-                         caption="../report/expressed-genes.rst",
-                         category="Quality Control"),
-        mito_proportion=report("plots/mito-proportion.pdf",
-                               caption="../report/mito-proportion.rst",
-                               category="Quality Control"),
-        spike_proportion=report("plots/spike-proportion.pdf",
-                                caption="../report/spike-proportion.rst",
-                                category="Quality Control")
-    log:
-        "logs/qc.log"
-    conda:
-        "../envs/eval.yaml"
-    script:
-        "../scripts/qc.R"
+rule qc_plot_all:
+	input:
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_mito_ribo_perc.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nCount_5Kmax.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nFeature.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_VlnPlot_nGenePerUMI.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_mitoRatio.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_riboRatio.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_nFeature.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['qc'],'{cancer}_{celltype}_ScattPlot_nCount_nFeature_perSample.jpg'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+	output:
+		path.join(config['log'],"qc_plot.finish")
+	shell:
+		"touch {output}"
 
 
-rule explained_variance:
-    input:
-        rds="analysis/normalized.rds",
-        cells="cells.tsv"
-    output:
-        report("plots/explained-variance.pdf",
-               caption="../report/explained-variance.rst",
-               category="Quality Control")
-    log:
-        "logs/explained-variance.log"
-    conda:
-        "../envs/eval.yaml"
-    script:
-        "../scripts/explained-variance.R"
+rule qc_discard:
+	input:
+		path.join(config['dir']['data'],'{cancer}_{celltype}_merged.rds')
+	params:
+		all=config['qc']['all_sample']
+		lowqual_list=config['manifest']['lowqual_sample']
+		outlying=config['qc']['cal_outlyingness']
+		outdir=config['dir']['qc']
+	output:
+		path.join(config['dir']['qc'],'{cancer}_{celltype}_scater_outlier.jpg')
+	script:
+		"../scripts/qc_discard.R"
 
 
-def get_gene_vs_gene_config(wildcards):
-    return config["gene-vs-gene-plots"][wildcards.settings]
 
-def get_constrain_celltypes(wildcards):
-    return get_gene_vs_gene_config(wildcards).get("constrain-celltypes")
-
-
-def get_gene_vs_gene_fits(wildcards):
-    constrain_celltypes = get_constrain_celltypes(wildcards)
-    constrained_markers = markers
-    if constrain_celltypes:
-        constrained_markers = markers.loc[markers["name"].isin(constrain_celltypes)]
-    return expand("analysis/cellassign.{parent}.rds", parent=constrained_markers["parent"].unique())
-    
-
-
-rule gene_vs_gene:
-    input:
-        sce="analysis/normalized.batch-removed.rds",
-        fits=get_gene_vs_gene_fits
-    output:
-        report("plots/gene-vs-gene/{gene_a}-vs-{gene_b}.{settings}.expressions.pdf",
-                   caption="../report/gene-vs-gene-plot.rst",
-                   category="Gene vs Gene Comparisons")
-    params:
-        min_gamma=config["celltype"]["min_gamma"],
-        constrain_celltypes=get_constrain_celltypes,
-        regression=lambda w: get_gene_vs_gene_config(w).get("regression", False),
-        correlation=lambda w: get_gene_vs_gene_config(w).get("correlation", False),
-        dropout_threshold=config["model"]["dropout-threshold"]
-    log:
-        "logs/gene-vs-gene/{gene_a}-vs-{gene_b}.{settings}.log"
-    conda:
-        "../envs/eval.yaml"
-    script:
-        "../scripts/plot-gene-gene-expression.R"
-
-
-rule gene_tsne:
-    input:
-        sce="analysis/normalized.batch-removed.rds"
-    output:
-        report("plots/gene-tsne/{gene}.tsne.seed={seed}.pdf",
-               caption="../report/gene-tsne.rst",
-               category="Dimension Reduction")
-    log:
-        "logs/gene-tsne/{gene}.seed={seed}.log"
-    conda:
-        "../envs/eval.yaml"
-    wildcard_constraints:
-        seed="[0-9]+"
-    script:
-        "../scripts/gene-tsne.R"
+rule qc_discard_all:
+	input:
+		

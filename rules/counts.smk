@@ -12,7 +12,7 @@ if "counts" in config:
             feature_ids=config["counts"]["feature_ids"]
         log:
             "logs/load-counts.log"
-        conda:
-            "../envs/eval.yaml"
+        #conda:
+        #    "../envs/eval.yaml"
         script:
             "../scripts/load-counts.R"
