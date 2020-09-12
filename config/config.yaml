@@ -3,7 +3,7 @@ manifest:
   escc_epi: config/samples_ESCC_epis.txt
   gej_immun: config/samples_GEJ_immun.txt
   gej_epi: config/samples_GEJ_epis.txt
-  lowqual_sample: NA
+  lowqual_sample: config/lowqual_sample_basedonMitoPerc.txt
 
 # subdirectories
 dir:
@@ -11,11 +11,31 @@ dir:
   data: data
   log: log
   qc: plot/qc
+  plot: plot
+  resources: resources
 
 # qc strategy
 qc:
-  all_sample: true
-  cal_outlyingness: true
+  all_sample: false
+  cal_outlyingness: false
+  #target: merged
+  target: outlyflted
+  strategy: outlier
+  nCell: 10
+  nUMI_lo: 1000
+  nUMI_up: 100000
+  nGene_lo: 200
+  nGene_up: 10000
+  log10GenesPerUMI: 0.8
+  mitoCountRatio: 0.2
+
+# normalization strategies
+norm:
+  #regressNum: true #whether to include nGene and nUMI in SCTransform var.regress
+  sctPreNorm: true    #whether to run SCTranform before calculating cell cycle scores
+  maxPC: 30
+  perSample: true  #sample-level normalization then integrate
+  findAnchor: rpca
 
 counts:
   # specify count table (rows: genes/transcripts/spikes, cols: cells)

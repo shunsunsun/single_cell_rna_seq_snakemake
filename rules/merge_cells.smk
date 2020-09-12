@@ -4,7 +4,7 @@ rule createSeuratObject:
 		path.join(config['dir']['rawdata'],'{sample}','GRCh38','barcodes.tsv'),
 		path.join(config['dir']['rawdata'],'{sample}','GRCh38','matrix.mtx')
 	params:
-		dir=path.join(config['dir']['rawdata'],'{sample}','GRCh38')
+		dir=path.join(config['dir']['rawdata'],'{sample}','GRCh38'),
 		id='{sample}'
 	output:
 		path.join(config['dir']['data'],'{sample}.seuratobj.rds')
