@@ -3,6 +3,7 @@ library(ggplot2)
 library(patchwork)
 # set up future for parallelization
 library(future)
+library(future.apply)
 
 input <- snakemake@input[[1]] ## *_flted.rds
 out_seurat <- snakemake@output[["rds"]]
@@ -57,27 +58,15 @@ if(!snakemake@params[["normPerSample"]]){
 		# Split seurat object to perform cell cycle scoring and SCTransform on all samples
 		split_seurat <- SplitObject(flted_seurat, split.by = "orig.ident")
 
-		getTransform <- function(seu){
-			out <- tryCatch({
-				tmp <- CellCycleScoring(seu, g2m.features=g2m_genes, s.features=s_genes)
-				return(SCTransform(tmp, vars.to.regress = c(regVars, 'S.Score', 'G2M.Score')))
-			},error=function(cond){
-				#if(grepl("Insufficient data values to produce", cond, fixed=TRUE)){
-				return(SCTransform(seu, vars.to.regress = regVars))
-				#}
-			})
-			return(out)
-		}
-	
 		# Normalize each sample
-		split_seurat <- lapply(X = split_seurat, FUN = function(s) {
+		split_seurat <- future_lapply(X = split_seurat, FUN = function(s) {
 			print(unique(s@meta.data$orig.ident))
 			##After the filtering, sample-level cell/feature number criterion may not be met
 			x=CreateSeuratObject(counts=GetAssayData(object=s, slot='counts'), meta.data=s@meta.data, min.cells=3, min.features=200)
 			if(!snakemake@params[["sctPreNorm"]]){
-				x <- NormalizeData(x)
 	        		x <- tryCatch({
-					tmp <- CellCycleScoring(x, g2m.features=g2m_genes, s.features=s_genes)
+					tmp <- NormalizeData(x)
+					tmp <- CellCycleScoring(tmp, g2m.features=g2m_genes, s.features=s_genes)
 	        			return(SCTransform(tmp, vars.to.regress = c(regVars, 'S.Score', 'G2M.Score')))
 				}, error=function(cond){
 					#if(grepl("Insufficient data values to produce", cond, fixed=TRUE)){
@@ -85,12 +74,12 @@ if(!snakemake@params[["normPerSample"]]){
 					#}
 				})
 			}else{
-				x <- SCTransform(x, assay = 'RNA', new.assay.name = 'SCT', vars.to.regress = regVars)
 				x <- tryCatch({
-	        			tmp <- CellCycleScoring(x, s.features = s_genes, g2m.features = g2m_genes, assay = 'SCT', set.ident = TRUE)
+					tmp <- SCTransform(x, assay = 'RNA', new.assay.name = 'SCT', vars.to.regress = regVars)
+	        			tmp <- CellCycleScoring(tmp, s.features = s_genes, g2m.features = g2m_genes, assay = 'SCT', set.ident = TRUE)
 	        			return(SCTransform(tmp, assay = 'RNA', new.assay.name = 'SCT', vars.to.regress = c(regVars, 'S.Score', 'G2M.Score')))
 				}, error=function(cond){
-					return(SCTransform(x, assay = 'RNA', new.assay.name = 'SCT', vars.to.regress = regVars))
+					return(SCTransform(x, vars.to.regress = regVars))
 				})
 			}
 		})
@@ -110,13 +99,10 @@ if(!snakemake@params[["normPerSample"]]){
 	if(snakemake@params[["reduction"]]=="cca"){
 		integ_anchors <- FindIntegrationAnchors(object.list = split_seurat, normalization.method = "SCT", anchor.features = integ_features, verbose = TRUE, dims=1:nPC)
 	}else{
-		split_seurat <- lapply(X = split_seurat, FUN = function(x) {
-    			x <- ScaleData(x, features = integ_features, verbose = FALSE)
-			x <- RunPCA(x, features = integ_features, verbose = FALSE)
-		})
+		split_seurat <- future_lapply(X = split_seurat, FUN = RunPCA, verbose=FALSE, features=integ_features)
 		integ_anchors <- FindIntegrationAnchors(object.list = split_seurat, normalization.method = "SCT", anchor.features = integ_features, reduction = "rpca", verbose = TRUE, dims=1:nPC)
 	}
-	# Integrate across conditions
+	# Integrate across conditions	
 	norm_seurat <- IntegrateData(anchorset = integ_anchors, normalization.method = "SCT", dims=1:nPC)
 	options(future.globals.maxSize = 500*1024^2) #500M	
 }
@@ -136,7 +122,6 @@ norm_seurat <- FindNeighbors(norm_seurat, dims = 1:nPC)
 norm_seurat <- FindClusters(norm_seurat)
 
 plan(sequential)
-
 
 # Visualization
 
