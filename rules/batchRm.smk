@@ -6,11 +6,13 @@ if 'pipe' in config['qc']['strategy']:
 	inData='pipeCompflted'
 
 
-rule seurat3_integration:
+rule cca_integration:
 	input:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_sctNorm.rds')
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_sctNorm.rds')
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
 	output:
-		rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_BatchS3.rds')
+		rds=path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds')
+		#rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_BatchS3.rds')
 		#pca=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_pca.jpg'),
 		#tsne=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_tsne.jpg'),
 		#umap=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_umap.jpg'),
@@ -32,9 +34,11 @@ else:
 
 rule harmony:
 	input:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+hmynorm+'.rds')	
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'.rds')	
+		path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'.rds')
 	output:
-		rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+hmynorm+'_BatchHmy.rds')
+		#rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'_BatchHmy.rds')
+		rds=path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'_BatchHmy.rds')
 	params:
 		norm4harmony=hmynorm,
 		theta=config['batchRm']['harmony_theta'],
@@ -46,12 +50,64 @@ rule harmony:
 		"../scripts/step7_batchRm_harmony.R"
 
 
+if 'sct' in config['batchRm']['norm4fastMNN']:
+	fastMNNnorm='sctNorm'
+else:
+	fastMNNnorm='logNormScale'
+
+
+rule fastMNN:
+	input:
+		path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'.rds')
+	output:
+		path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'_BatchfastMNN.rds')
+	params:
+		norm4fastMNN=fastMNNnorm,
+		nfeatures=config['batchRm']['fastMNN_nFeature']
+	threads:
+		5
+	script:
+		"../scripts/step7_batchRm_fastMNN.R"
+
+
+rule scanorama:
+	input:
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+	output:
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchScano.rds')
+	threads:
+		20
+	script:
+		"../scripts/step7_batchRm_scanorama.R"
+
+
+rule combat:
+	input:
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+	output:
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCombat.rds')
+	#params:
+	#	covariates="condition+cancerType"
+	threads:
+		20
+	script:
+		"../scripts/step7_batchRm_comBat.R"
+
+
 def get_batch_input(wildcards):
 	wanted = []
 	if config['batchRm']['runSeurat3'] == True:
-		wanted.extend(expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_BatchS3.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM']))
+	#	wanted.extend(expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_BatchS3.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM']))
+		wanted.extend(expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchS3.rds'),dataset=['ESCC','GEJ']))
 	if config['batchRm']['runHarmony'] == True:
-		wanted.extend(expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+hmynorm+'_BatchHmy.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM']))
+	#	wanted.extend(expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+hmynorm+'_BatchHmy.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM']))
+		wanted.extend(expand(path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'_BatchHmy.rds'),dataset=['ESCC','GEJ']))
+	if config['batchRm']['runfastMNN'] == True:
+		wanted.extend(expand(path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'_BatchfastMNN.rds'),dataset=['ESCC','GEJ']))
+	#if config['batchRm']['runCombat'] == True:
+	#	wanted.extend(expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCombat.rds'),dataset=['ESCC','GEJ']))
+	#if config['batchRm']['runScanorama'] == True:
+	#	wanted.extend(expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchScano.rds'),dataset=['ESCC','GEJ']))
 	return wanted
 
 
@@ -64,3 +120,28 @@ rule batch_removal_all:
 		"touch {output}"
 
 
+rule combat_all:
+	input:
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCombat.rds'),dataset=['ESCC','GEJ'])
+	output:
+		path.join(config['dir']['log'],'combat.finish')
+	shell:
+		"touch {output}"
+
+
+rule scanorama_all:
+	input:
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchScano.rds'),dataset=['ESCC','GEJ'])
+	output:
+		path.join(config['dir']['log'],'scanorama.finish')
+	shell:
+		"touch {output}"
+
+
+rule cca_all:
+	input:
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds'),dataset=['ESCC','GEJ'])
+	output:
+		path.join(config['dir']['log'],'cca.finish')
+	shell:
+		"touch {output}"

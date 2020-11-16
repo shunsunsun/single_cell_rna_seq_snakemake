@@ -5,9 +5,7 @@ suppressPackageStartupMessages(library(scater))
 
 infile <- snakemake@input[[1]]
 outfile <- snakemake@output[[1]]
-picked_clust <- unname(unlist(strsplit(snakemake@params[["clust"]],':')))
-randSeed <- 1129L
-set.seed(randSeed)
+picked_clust <- unname(unlist(strsplit(snakemake@params[["clust"]],'_')))
 
 ##Recall that dimension reduction was conducted on a Seurat object, which was then converted into a SingleCellExperiment object for walk trap clustering, 
 ##So we only need to add the walk trap clustering result into the meta.data of the Seurat object and then would be able to use the visusalization tools of Seurat
@@ -26,4 +24,11 @@ if(picked_clust[1]=="seurat"){
 }
 Idents(object = se) <- com
 se[['seurat_clusters']] <- com
-se[['ident']] <- com
+se <- DietSeurat(se, counts = TRUE, data = TRUE, scale.data = TRUE,graph = paste0(picked_clust[2],"Clust"),
+        dimreducs = c(picked_clust[2],paste0(picked_clust[2],'_tsne'),paste0(picked_clust[2],'_umap')))
+col2rm <- colnames(se[[]])[grepl("_res.",colnames(se[[]]))] 
+##https://github.com/satijalab/seurat/issues/2017#issuecomment-524418929
+for(c in col2rm){
+	se[[c]] <- NULL
+}   
+saveRDS(se, file=outfile)

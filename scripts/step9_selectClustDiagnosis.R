@@ -56,9 +56,9 @@ plotClust <- function(se, outPrefix, reducPrefix, res_colname){
 	#save(p,p1,p2,p3,p4,p5,p6,file=paste0(outPrefix,"_ggplot2Objs.rda"))
 }
 
-checkClustStability <- function(cd, com, matnorm, outfile){
+checkClustStability <- function(cd, com, matnorm, outfile, verbose=FALSE){
 	##MUDAN::getStableClusters
-	stable <- getStableClusters(cd, com, matnorm, verbose=FALSE, plot=FALSE)
+	stable <- getStableClusters(cd, com, matnorm, verbose=verbose, plot=FALSE)
 	com.sub <- na.omit(stable$com)
 	com=as.numeric(unique(com))
 	com.sub=as.numeric(unique(com.sub))
@@ -90,9 +90,9 @@ Idents(object = se) <- com
 se[['seurat_clusters']] <- com
 se[['ident']] <- com
 #print(paste(unique(se[['ident']]),collapse=','))
-plotClust(se,paste0(outdir,"/",gsub("seClust.rds","finalClust",basename(infile))),picked_clust[2],'ident')
+#plotClust(se,paste0(outdir,"/",gsub("seClust.rds","finalClust",basename(infile))),picked_clust[2],'ident')
 cd=GetAssayData(object = se[["RNA"]], slot = "counts")
 matnorm=GetAssayData(object = se[["SCT"]], slot = "data")
 if(!file.exists(outfile)){
-	checkClustStability(cd,com,matnorm,outfile)
+	checkClustStability(cd,com,matnorm,outfile,TRUE)
 }

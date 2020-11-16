@@ -92,58 +92,45 @@ rule clust_diagnosis_all:
 		"touch {output}"
 
 
-rule GEJ_EP_clust_select:
+select_clust={'GEJ_EP':'walktrap_glmpca10_50','GEJ_IM':'walktrap_glmpca10_50','ESCC_IM':'seurat_glmpca20_0.6','ESCC_EP':'walktrap_glmpca20_30'}
+
+rule select_clust_diagn:
 	input:
-		path.join(config['dir']['data'],'GEJ_EP_pipeCompflted_seClust.rds')
+		path.join(config['dir']['data'], '{tissue_cell_type}_pipeCompflted_seClust.rds')
 	output:
-		path.join(config['dir']['log'],'GEJ_EP_pipeCompflted_stableClust.rpt')	
+		path.join(config['dir']['log'],'{tissue_cell_type}_pipeCompflted_stableClust.rpt')
 	params:
 		outPlot=path.join(config['dir']['plot'],'clustering'),
-		clust="walktrap:glmpca10:50"
-	script:
-		"../scripts/step9_selectClustDiagnosis.R"
-
-
-rule GEJ_IM_clust_select:
-	input:
-		path.join(config['dir']['data'],'GEJ_IM_pipeCompflted_seClust.rds')		
-	output:
-		path.join(config['dir']['log'],'GEJ_IM_pipeCompflted_stableClust.rpt')
-	params:
-		outPlot=path.join(config['dir']['plot'],'clustering'),
-		clust="walktrap:glmpca10:50"
-	script:
-		"../scripts/step9_selectClustDiagnosis.R"
-
-
-rule ESCC_EP_clust_select:
-	input:
-		path.join(config['dir']['data'],'ESCC_EP_pipeCompflted_seClust.rds')
-	output:
-		path.join(config['dir']['log'],'ESCC_EP_pipeCompflted_stableClust.rpt')
-	params:
-		outPlot=path.join(config['dir']['plot'],'clustering'),
-		clust="walktrap:glmpca20:30"
-	script:
-		"../scripts/step9_selectClustDiagnosis.R"
-
-
-rule ESCC_IM_clust_select:
-	input:
-		path.join(config['dir']['data'],'ESCC_IM_pipeCompflted_seClust.rds')
-	output:
-		path.join(config['dir']['log'],'ESCC_IM_pipeCompflted_stableClust.rpt')
-	params:
-		outPlot=path.join(config['dir']['plot'],'clustering'),
-		clust="seurat:glmpca20:0.6"
+		clust=lambda wildcards: select_clust[wildcards.tissue_cell_type]
 	script:
 		"../scripts/step9_selectClustDiagnosis.R"
 
 
 rule select_clust_diagn_all:
 	input:
-		expand(path.join(config['dir']['log'],'{cancer}_{celltype}_pipeCompflted_stableClust.rpt'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['log'],'{tissue_cell_type}_pipeCompflted_stableClust.rpt'),tissue_cell_type=['ESCC_EP','GEJ_EP','ESCC_IM','GEJ_IM'])
 	output:
-		path.join(config['dir']['log'],'select_clust.finish')
+		path.join(config['dir']['log'],'select_clust_diagn.finish')
+	shell:
+		"touch {output}"
+
+
+rule clean_clust_res:
+	input:
+		path.join(config['dir']['data'], '{tissue_cell_type}_pipeCompflted_seClust.rds')
+	output:
+		path.join(config['dir']['data'], '{tissue_cell_type}_pipeCompflted_clustered.rds')
+	params:
+		clust=lambda wildcards: select_clust[wildcards.tissue_cell_type]
+	script:
+		"../scripts/step9b_cleanAfterClust.R"
+
+
+rule clean_clust_all:
+	input:
+		expand(path.join(config['dir']['data'], '{tissue_cell_type}_pipeCompflted_clustered.rds'),tissue_cell_type=['ESCC_EP','ESCC_IM','GEJ_EP','GEJ_IM'])
+		#expand(path.join(config['dir']['data'], '{tissue_cell_type}_pipeCompflted_clustered.rds'),tissue_cell_type=['ESCC_IM','GEJ_EP','GEJ_IM'])
+	output:
+		path.join(config['dir']['log'],'clean_clust.finish')
 	shell:
 		"touch {output}"

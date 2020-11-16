@@ -9,6 +9,40 @@ if 'sct' in config['norm']['method']:
 if 'log' in config['norm']['method']:
         norm='logNormScale'
 
+
+rule pre_biscuit:
+	input:
+		path.join(config['dir']['data'],'{dataset}_QCed.rds')
+	output:
+		path.join(config['dir']['scripts'],'BISCUIT','{dataset}_QCed_4biscuit.rda')
+	script:
+		"../scripts/BISCUIT/prepare_BISCUIT_input.R"
+
+
+rule biscuit:
+	input:
+		path.join(config['dir']['scripts'],'BISCUIT','{dataset}_QCed_4biscuit.rda')
+	output:
+		path.join(config['dir']['scripts'],'BISCUIT','{dataset}','plots/extras/Output_values.txt')
+	params:
+		infile='{dataset}_QCed_4biscuit.rda',
+		outdir='{dataset}',
+		alpha=0.05
+	threads:
+		30
+	script:
+		"../scripts/BISCUIT/start_file.R"
+
+
+rule biscuit_all:
+	input:
+		expand(path.join(config['dir']['scripts'],'BISCUIT','{dataset}','plots/extras/Output_values.txt'),dataset=['ESCC','GEJ'])
+	output:
+		path.join(config['dir']['log'],'biscuit.finish')
+	script:
+		"touch {output}"
+
+
 rule pca:
 	input:
 		path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_'+norm+'.rds')
@@ -27,13 +61,16 @@ ndim=str(config['glmpca']['ndim'])
 
 rule glm_pca:
 	input:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')		
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')		
+		path.join(config['dir']['data'],'{dataset}_QCed.rds')
 	output:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds'),
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds')
+		path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds')
 	params:
 		plot=path.join(config['dir']['plot'],'dimenReduct'),
 		nhvg=config['featSelect']['nFeature'],
-		ndim=ndim
+		ndims="10_20"
+		#ndim=config['glmpca']['ndim']
 	threads:
 		10
 	script:
@@ -52,7 +89,8 @@ rule pca_all:
 
 rule glm_pca_all:
 	input:
-		expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		#expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds'),dataset=['ESCC','GEJ'])
 	output:
 		path.join(config['dir']['log'],'glm_pca_all.finish')
 	shell:

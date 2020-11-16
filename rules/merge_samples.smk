@@ -19,7 +19,9 @@ rule merge_GEJ_EP:
 	output:
 		path.join(config['dir']['data'],'GEJ_EP_merged_noQCmetrics.rds')
 	params:
-		config['dir']['data']
+		indir=config['dir']['data'],
+		projectName="gej_ep",
+		suffix=".seuratobj.rds"
 	script:
 		"../scripts/step2_mergeSamples.R"
 
@@ -31,7 +33,9 @@ rule merge_GEJ_IM:
 	output:
 		path.join(config['dir']['data'],'GEJ_IM_merged_noQCmetrics.rds')
 	params:
-		config['dir']['data']
+		indir=config['dir']['data'],
+		projectName="gej_im",
+		suffix=".seuratobj.rds"
 	script:
 		"../scripts/step2_mergeSamples.R"
 
@@ -43,7 +47,9 @@ rule merge_ESCC_EP:
 	output:
 		path.join(config['dir']['data'],'ESCC_EP_merged_noQCmetrics.rds')
 	params:
-		config['dir']['data']
+		indir=config['dir']['data'],
+		projectName="escc_ep",
+		suffix=".seuratobj.rds"
 	script:
 		"../scripts/step2_mergeSamples.R"
 
@@ -55,7 +61,9 @@ rule merge_ESCC_IM:
 	output:
 		path.join(config['dir']['data'],'ESCC_IM_merged_noQCmetrics.rds')
 	params:
-		config['dir']['data']
+		indir=config['dir']['data'],
+		projectName="escc_im",
+		suffix=".seuratobj.rds"
 	script:
 		"../scripts/step2_mergeSamples.R"
 	
@@ -65,5 +73,47 @@ rule merge_all:
 		expand(path.join(config['dir']['data'],'{cancer}_{celltype}_merged.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
 	output:
 		path.join(config['dir']['log'],'merge_samples.finish')
+	shell:
+		"touch {output}"
+
+
+rule merge_ESCC:
+	input:
+		path.join('config','merge_escc_samples.txt')
+	output:
+		path.join(config['dir']['data'],'ESCC_QCed.rds')
+	params:
+		"ESCC"
+	script:
+		"../scripts/step2_mergeDataSets.R"
+
+
+rule merge_GEJ:
+	input:
+		path.join('config','merge_gej_samples.txt')
+	output:
+		path.join(config['dir']['data'],'GEJ_QCed.rds')
+	params:
+		"GEJ"
+	script:
+		"../scripts/step2_mergeDataSets.R"
+
+
+rule merge_IM:
+	input:
+		path.join('config','merge_immune_samples.txt')
+	output:
+		path.join(config['dir']['data'],'IM_QCed.rds')
+	params:
+		"ESCC_GEJ_IM"
+	script:
+		"../scripts/step2_mergeDataSets.R"
+
+
+rule merge_datasets_all:
+	input:
+		expand(path.join(config['dir']['data'], '{dataset}_QCed.rds'),dataset=['ESCC','GEJ','IM'])
+	output:
+		path.join(config['dir']['log'],'merge_datasets.finish')
 	shell:
 		"touch {output}"

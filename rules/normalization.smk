@@ -50,6 +50,30 @@ rule whole_normalize_all:
 		"touch {output}"
 
 
+rule sctNorm_mergeData:
+	input:
+		path.join(config['dir']['data'],'{dataset}_QCed.rds')
+	output:
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+	params:
+		regressNum=config['norm']['regressNum'],
+		ccgenes=path.join(config['dir']['resources'],'cycle.rda'),
+		sctPreNorm=config['norm']['sctPreNorm']
+	threads:
+		40
+	script:
+		"../scripts/step6_scTransform.R"
+
+
+rule normalize_mergeData:
+	input:
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds'),dataset=['ESCC','GEJ','IM'])
+	output:
+		path.join(config['dir']['log'],'norm_merged.finish')
+	shell:
+		"touch {output}"
+
+
 rule split_sctNorm_ESCC_EP:
 	input:
 		path.join(config['dir']['data'],'ESCC_EP_'+flt+'.rds')
