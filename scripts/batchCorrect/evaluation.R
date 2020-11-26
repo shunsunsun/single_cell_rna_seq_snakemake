@@ -7,12 +7,21 @@ suppressPackageStartupMessages({
 
 args  <- commandArgs(trailingOnly=T)
 n_cpu <- as.numeric(args[1])
-infile <- args[2] #absolute path
+pre_bc <- "data/GEJ_QCed_sctNorm.rds" 
+post_bc <- args[2] #absolute path
 outPrefix <- gsub(".rds","_eval",infile)
 
-se <- readRDS(file=infile)
-df <- se@meta.data
-df$orig.ident=sapply(strsplit(df$orig.ident,"-"),"[",1)
+se_pre <- readRDS(file=pre_bc)
+df_pre <- se_pre@meta.data
+df_pre$orig.ident=sapply(strsplit(df_pre$orig.ident,"-"),"[",1)
+se_post <- readRDS(file=post_bc)
+df_post <- se_post@meta.data
+df_post$orig.ident=sapply(strsplit(df_post$orig.ident,"-"),"[",1)
+
+
+
+
+
 
 # Adjusted rand index test for overlap between batches (samples) and cluster labelings
 # This goes between 0 (completely dissimilar clustering) to 1 (identical clustering)
