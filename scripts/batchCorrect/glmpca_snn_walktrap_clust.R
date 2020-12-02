@@ -24,4 +24,4 @@ for (n in c(10,20)){
 	        sce[[paste0("glmpca",n,"_snn",k)]] <- igraph::cluster_walktrap(g)$membership
 	}
 }
-saveRDS(se, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_glmpcaReduct_walktrap_clustered.rds")
+saveRDS(sce, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_glmpcaReduct_walktrap_clustered.rds")

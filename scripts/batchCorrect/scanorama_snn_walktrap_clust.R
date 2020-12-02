@@ -21,4 +21,4 @@ for(k in c(20,50,80)){
 	g <- buildSNNGraph(sce, type="jaccard", k=k, use.dimred = 'PCA',BPPARAM=MulticoreParam(nworker))
         sce[[paste0("snn",k)]] <- igraph::cluster_walktrap(g)$membership
 }
-saveRDS(se, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchScano_walktrap_clustered.rds")
+saveRDS(sce, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchScano_walktrap_clustered.rds")
