@@ -11,14 +11,18 @@ args  <- commandArgs(trailingOnly=T)
 infile=args[1]
 #infile=snakemake@input[[1]] #GEJ_QCed_*_walktrap_clustered.rds
 sce <- readRDS(file=infile)
-df <- as.data.frame(colData(sce))
-df <- df[, colnames(df)=='orig.ident' | grepl("^snn", colnames(df)) | grepl("_res.", colnames(df))]
-colnames(df) <- gsub("^snn","walktrap_snn",colnames(df))     
-df$orig.ident=sapply(strsplit(df$orig.ident,"-"),"[",1)
+meta <- as.data.frame(colData(sce))
+meta <- meta[, colnames(meta)=='orig.ident' | grepl("snn", colnames(meta)) | grepl("_res.", colnames(meta))]
+walktrap_res <- which(grepl("snn",colnames(meta)) & !grepl("_res",colnames(meta)))
+colnames(meta)[walktrap_res]=gsub("snn","walktrap_snn",colnames(meta)[walktrap_res])
+meta$orig.ident=sapply(strsplit(meta$orig.ident,"-"),"[",1)
 
 for(r in reducedDimNames(sce)){
     outfile <- gsub("walktrap_clustered",paste0(r, "_lisi"),infile)
     if(!file.exists(outfile)){
+        if(length(reducedDimNames(sce))>1){
+                df=meta[,colnames(meta)=="orig.ident" | grepl(tolower(r),colnames(meta))]
+        }
         rd <- reducedDim(sce, type=r)
         lisi <- compute_lisi(X=rd, meta_data=df, label_colnames='orig.ident', perplexity=40)
 	res <- data.frame(BasedOn='all_cell',median=median(lisi[,1]),min=min(lisi[,1]),max=max(lisi[,1]),

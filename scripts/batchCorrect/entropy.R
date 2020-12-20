@@ -1,4 +1,5 @@
 ##Shannon entropy as proposed in https://github.com/cellgeni/batchbench/blob/master/bin/R_entropy.R
+##A high batch entropy is preferrable
 
 suppressPackageStartupMessages({
     library(future.apply)
@@ -9,11 +10,12 @@ args  <- commandArgs(trailingOnly=T)
 infile=args[1]
 #infile=snakemake@input[[1]] #GEJ_QCed_*_walktrap_clustered.rds
 sce <- readRDS(file=infile)
-df <- as.data.frame(colData(sce))
-df <- df[, colnames(df)=='orig.ident' | grepl("^snn", colnames(df)) | grepl("_res.", colnames(df))]
-colnames(df) <- gsub("^snn","walktrap_snn",colnames(df))     
-df$orig.ident=sapply(strsplit(df$orig.ident,"-"),"[",1)
-nbatches <- length(unique(df$orig.ident))
+meta <- as.data.frame(colData(sce))
+meta <- meta[, colnames(meta)=='orig.ident' | grepl("snn", colnames(meta)) | grepl("_res.", colnames(meta))]
+walktrap_res <- which(grepl("snn",colnames(meta)) & !grepl("_res",colnames(meta)))
+colnames(meta)[walktrap_res]=gsub("snn","walktrap_snn",colnames(meta)[walktrap_res])
+meta$orig.ident=sapply(strsplit(meta$orig.ident,"-"),"[",1)
+nbatches <- length(unique(meta$orig.ident))
 
 nworker=min(as.numeric(args[2]),length(availableWorkers()))
 print(paste0("Use ",nworker, " workers"))
@@ -30,10 +32,15 @@ shannon_entropy <- function(x, batch_vector, N_batches) {
 
 
 for(r in reducedDimNames(sce)){
-    outfile <- gsub("walktrap_clustered",paste0(r, "_knnEntropy"),infile)
+    outfile <- gsub("walktrap_clustered",paste0(r, "_knn50Entropy"),infile)
     if(!file.exists(outfile)){
+        if(length(reducedDimNames(sce))>1){
+                df=meta[,colnames(meta)=="orig.ident" | grepl(tolower(r),colnames(meta))]
+        }else{
+		df=meta
+	}
         rd <- reducedDim(sce, type=r)
-	knn <- RANN::nn2(rd,k = 31)$nn.idx
+	knn <- RANN::nn2(rd,k = 51)$nn.idx
 	batch_entropy <- future_apply(knn, 1, future.seed=1129, FUN = function(x) {shannon_entropy (x, df$orig.ident, nbatches)})
 	#names(batch_entropy)=rownames(df)
 	res <- data.frame(BasedOn='all_cell',median=median(batch_entropy),min=min(batch_entropy),max=max(batch_entropy))

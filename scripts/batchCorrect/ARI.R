@@ -10,13 +10,24 @@ args  <- commandArgs(trailingOnly=T)
 infile=args[1]
 #infile=snakemake@input[[1]] #GEJ_QCed_*_walktrap_clustered.rds
 outfile <- gsub("walktrap_clustered","ari",infile)
+useImmun=args[2]
+if(useImmun=='T'){
+	outfile <- gsub("ari","ariImmun",outfile)
+}
+
 if(!file.exists(outfile)){
     sce <- readRDS(file=infile)
+    if(useImmun=='T'){
+	meta <- colData(sce)
+	meta <- meta[grepl("-I",meta$orig.ident),]
+	sce <- sce[,rownames(meta)]
+    }
     df <- as.data.frame(colData(sce))
-    df <- df[, colnames(df)=="orig.ident" | grepl("^snn", colnames(df)) | grepl("_res.", colnames(df))]
+    df <- df[, colnames(df)=="orig.ident" | grepl("snn", colnames(df)) | grepl("_res.", colnames(df))]
     samples <- unique(df$orig.ident)
     df$sample <- plyr::mapvalues(df$orig.ident, from = samples, to = 1:length(samples))
-    colnames(df) <- gsub("^snn","walktrap_snn",colnames(df))
+    walktrap_res <- which(grepl("snn",colnames(df)) & !grepl("_res",colnames(df)))
+    colnames(df)[walktrap_res]=gsub("snn","walktrap_snn",colnames(df)[walktrap_res])
     res <- NULL
     for(i in which(grepl("snn", colnames(df)) | grepl("_res.", colnames(df)))){
         ari=adj.rand.index(as.numeric(df$sample), as.numeric(df[,i]))
