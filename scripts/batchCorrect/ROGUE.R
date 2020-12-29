@@ -17,8 +17,18 @@ logfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/log/",gsub("walk
 nworker=min(as.numeric(args[2]),length(availableWorkers()))
 cat(sprintf("Use %d workers", nworker),file=logfile,append=T,sep="\n")
 plotDir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/batchCorrect/"
+useImmun=args[3]
+if(useImmun=='T'){
+	tmpfile1 <- gsub("rogue","rogueImmun",tmpfile1)
+	tmpfile2 <- gsub("rogue","rogueImmun",tmpfile2)
+	logfile <- gsub("rogue","rogueImmun",logfile)
+}
 
 sce <- readRDS(file=infile)
+if(useImmun=='T'){
+    meta <- colData(sce)
+    sce <- sce[,grepl("-I",rownames(meta))]
+}
 if(!grepl("BatchCCA", infile)){
 	expr <- counts(sce)
 }else{
@@ -68,7 +78,7 @@ if(!file.exists(tmpfile1)){
 		rlist[[k]] <- r[,colnames(r)!="clustMethod"]	
 	}
 	save(rlist, file=tmpfile1)
-else{
+}else{
 	load(file=tmpfile1)
 	print(paste0("loading ", tmpfile1))
 }
@@ -81,7 +91,7 @@ if(!file.exists(tmpfile2)){
 		colour = "black"), axis.title = element_text(size = 13, colour = "black")) + labs(title = n[[i]], x = "Clusters", y = "ROGUE")
 	}, r=rlist, n=names(rlist))
 	save(plist, file=tmpfile2)
-else{
+}else{
 	load(file=tmpfile2)
         print(paste0("loading ", tmpfile2))
 }

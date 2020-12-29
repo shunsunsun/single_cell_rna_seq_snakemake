@@ -1,9 +1,9 @@
-if 'hard' in config['qc']['strategy']:
-	inData='hardflted'
-if 'outly' in config['qc']['strategy']:
-	inData='outlyflted'
-if 'pipe' in config['qc']['strategy']:
-	inData='pipeCompflted'
+#if 'hard' in config['qc']['strategy']:
+#	inData='hardflted'
+#if 'outly' in config['qc']['strategy']:
+#	inData='outlyflted'
+#if 'pipe' in config['qc']['strategy']:
+#	inData='pipeCompflted'
 
 
 rule cca_integration:
@@ -18,7 +18,7 @@ rule cca_integration:
 		#umap=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_umap.jpg'),
 	params:
 		#nPC=config['batchRm']['seurat3_nPC'],
-		nFeature=config['batchRm']['seurat3_nFeature'],
+		nFeature=config['batchRm']['nFeature'],
 		anchor=config['batchRm']['seurat3_anchor']		
 	threads:
 		20
@@ -26,44 +26,47 @@ rule cca_integration:
 		"../scripts/step7_batchRm_seurat3.R"
 
 
-if 'sct' in config['batchRm']['norm4harmony']:
-	hmynorm='sctNorm'
-else:
-	hmynorm='logNormScale'
+#if 'sct' in config['batchRm']['norm4harmony']:
+#	hmynorm='sctNorm'
+#else:
+#	hmynorm='logNormScale'
 
 
 rule harmony:
 	input:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'.rds')	
-		path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'.rds')
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
 	output:
 		#rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'_BatchHmy.rds')
-		rds=path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'_BatchHmy.rds')
-	params:
-		norm4harmony=hmynorm,
-		theta=config['batchRm']['harmony_theta'],
-		nclust=config['batchRm']['harmony_nclust'],
-		max_it_clust=config['batchRm']['harmony_max_iter_cluster']
+		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds')
+	#params:
+	#	#norm4harmony=hmynorm,
+	#	theta=config['batchRm']['harmony_theta'],
+	#	nclust=config['batchRm']['harmony_nclust'],
+	#	max_it_clust=config['batchRm']['harmony_max_iter_cluster']
 	threads:
 		20
 	script:
 		"../scripts/step7_batchRm_harmony.R"
 
 
-if 'sct' in config['batchRm']['norm4fastMNN']:
-	fastMNNnorm='sctNorm'
-else:
-	fastMNNnorm='logNormScale'
+#if 'sct' in config['batchRm']['norm4fastMNN']:
+#	fastMNNnorm='sctNorm'
+#else:
+#	fastMNNnorm='logNormScale'
 
 
 rule fastMNN:
 	input:
-		path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'.rds')
+		path.join(config['dir']['data'],'{dataset}_QCed_scNorm.rds')
 	output:
-		path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'_BatchfastMNN.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_'+fastMNNnorm+'_BatchfastMNN.rds')
+                path.join(config['dir']['data'],'{dataset}_QCed_scNorm_BatchfastMNN.rds')
 	params:
-		norm4fastMNN=fastMNNnorm,
-		nfeatures=config['batchRm']['fastMNN_nFeature']
+		#norm4fastMNN=fastMNNnorm,
+		nfeatures=config['batchRm']['nFeature']
 	threads:
 		5
 	script:
@@ -143,5 +146,14 @@ rule cca_all:
 		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds'),dataset=['ESCC','GEJ'])
 	output:
 		path.join(config['dir']['log'],'cca.finish')
+	shell:
+		"touch {output}"
+
+
+rule harmony_all:
+	input:
+		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds'),dataset=['ESCC','GEJ'])
+	output:
+		path.join(config['dir']['log'],'harmony.finish')
 	shell:
 		"touch {output}"

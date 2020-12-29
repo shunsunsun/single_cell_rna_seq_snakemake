@@ -19,8 +19,7 @@ if(!file.exists(outfile)){
     sce <- readRDS(file=infile)
     if(useImmun=='T'){
 	meta <- colData(sce)
-	meta <- meta[grepl("-I",meta$orig.ident),]
-	sce <- sce[,rownames(meta)]
+	sce <- sce[,grepl("-I",rownames(meta))]
     }
     df <- as.data.frame(colData(sce))
     df <- df[, colnames(df)=="orig.ident" | grepl("snn", colnames(df)) | grepl("_res.", colnames(df))]

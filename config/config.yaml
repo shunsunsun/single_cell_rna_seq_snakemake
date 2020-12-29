@@ -1,8 +1,8 @@
 manifest:
-  escc_immun: config/samples_ESCC_immun.txt
-  escc_epi: config/samples_ESCC_epis.txt
-  gej_immun: config/samples_GEJ_immun.txt
-  gej_epi: config/samples_GEJ_epis.txt
+  escc_immun: config/samples_ESCC_IM.txt
+  escc_epi: config/samples_ESCC_EP.txt
+  gej_immun: config/samples_GEJ_IM.txt
+  gej_epi: config/samples_GEJ_EP.txt
   lowqual_sample: config/lowqual_sample_basedonMitoPerc.txt
 
 # subdirectories
@@ -31,46 +31,28 @@ qc:
 
 # normalization strategies
 norm:
-  #regressNum: true #whether to include nGene and nUMI in SCTransform var.regress
+  regressNum: true #whether to include nGene and nUMI in SCTransform var.regress
   sctPreNorm: true    #whether to run SCTranform before calculating cell cycle scores
   maxPC: 30
   perSample: true  #sample-level normalization then integrate
   findAnchor: rpca
 
-counts:
-  # specify count table (rows: genes/transcripts/spikes, cols: cells)
-  path: counts.tsv
-  # define which kind of features are described in each row (must be a term understood by Ensembl biomart, e.g. ensembl_gene_id, hgnc_symbol)
-  # feature_ids: ensembl_gene_id
-  feature_ids: hgnc_symbol
-  # BioMart host to use (e.g. www.ensembl.org, useast.ensembl.org, ...)
-  biomart: useast.ensembl.org
+# batch correction
+batchRm:
+  nFeature: 2000
+  seurat3_anchor: cca
 
-# Variables to use for batch effect removal and as factors to be ignored in variance analysis.
-# This should always be the two cell cycle phases (G1, G2M) which are determined automatically during analysis.
-# In addition, you may add any column name of the cell sheet (see above).
-model:
-  # R formula representing known batch effects
-  design: "~ G1 + G2M + detection_rate"
-  # Rely on spike-ins for variance model estimation.
-  # This is usually not desired because of few and noisy spike-ins.
-  # If this is set to false, engogeneous genes are used instead, under the
-  # assumption that most of them are not differentially expressed.
-  use-spikes: false
-  # Minimum value of average difference in true (biological) log2 expression
-  # between any two cells.
-  min-bio-comp: 0.5
-  # FDR threshold for selecting highly variable genes/transcripts (HVGs)
-  fdr: 0.05
-  # show the expression distribution of the top n HVGs
-  show-n: 20
-  # compute correlation for top n HVGs
-  top-n: 200
-  # Expressions below this logcount are considered as dropouts 
-  # logcounts are log2 transformed, including 1 pseudocount, normalized, 
-  # and batch effect corrected).
-  # This is currently only used for gene-vs-gene plots (see below).
-  dropout-threshold: 1
+# evaluate clustering stability
+stable:
+  subsample_rate: 0.8
+  num_of_subsample: 20
+  subsample_k: 10,20,30
+  subsample_resolution: 0.8,1,1.2
+  subsample_pc: 10,30,50
+  PreprocessSubsetData_subsample_pars: "variable.features.n = 3000, score.thresh = 1e-5, n.start = 100, nn.eps = 0"
+  input_seurat: data/GEJ_QCed_sctNorm_BatchCCA.rds
+  #input_seurat: data/ESCC_QCed_sctNorm_BatchHmy.rds
+  #input_seurat: data/GEJ_QCed_sctNorm_BatchHmy.rds
 
 # Comment out to not assign cell type via signatures
 celltype:
@@ -140,15 +122,3 @@ diffexp:
     genes_of_interest:
       - MITF
       - MYCN
-
-
-species: mouse
-
-spike-ins:
-  # Regular expression pattern to detect spike-ins.
-  pattern: "^ERCC"
-
-filtering:
-  # Remove all genes with a  mean count less than the given threshold.
-  min-avg-count: 1
-

@@ -32,24 +32,25 @@ rule qc_metrics_all:
 
 label=config['qc']['target']
 
+
 rule qc_plot:
 	input:
 		path.join(config['dir']['data'],'{cancer}_{celltype}_' + label + '.rds')
 	params:
 		outdir=path.join(config['dir']['qc'],label),
-		nCell=config['qc']['nCell'],
-                bar_nCell=config['plot']['bar_nCell'],
-                vln_mito=config['plot']['vln_mito'],
-                vln_ribo=config['plot']['vln_ribo'],
-                vln_hk=config['plot']['vln_hk'],
-                vln_hb=config['plot']['vln_hb'],
-                vln_nCount=config['plot']['vln_nCount'],
-                vln_nFeature=config['plot']['vln_nFeature'],
-                vln_complexity=config['plot']['vln_complexity'],
-                scatter_nCount_mito=config['plot']['scatter_nCount_mito'],
-                scatter_nCount_nFeature_colSample=config['plot']['scatter_nCount_nFeature_colSample'],
-                scatter_nCount_nFeature_colHb=config['plot']['scatter_nCount_nFeature_colHb'],
-                scatter_nCount_nFeature_perSample=config['plot']['scatter_nCount_nFeature_perSample']
+		#nCell=config['qc']['nCell'],
+                #bar_nCell=path.join(config['plot'],'bar_nCell'),
+                #vln_mito=path.join(config['plot'],'vln_mito'),
+                #vln_ribo=path.join(config['plot'],'vln_ribo'),
+                #vln_hk=path.join(config['plot'],'vln_hk'),
+                #vln_hb=path.join(config['plot'],'vln_hb'),
+                #vln_nCount=path.join(config['plot'],'vln_nCount'),
+                #vln_nFeature=path.join(config['plot'],'vln_nFeature'),
+                #vln_complexity=path.join(config['plot'],'vln_complexity'),
+                #scatter_nCount_mito=path.join(config['plot'],'scatter_nCount_mito'),
+                #scatter_nCount_nFeature_colSample=path.join(config['plot'],'scatter_nCount_nFeature_colSample'),
+                #scatter_nCount_nFeature_colHb=path.join(config['plot'],'scatter_nCount_nFeature_colHb'),
+                #scatter_nCount_nFeature_perSample=path.join(config['plot'],'scatter_nCount_nFeature_perSample')
 	output:
 		#path.join(config['dir']['qc'],label,'{cancer}_{celltype}_BarPlot_nCellperSample.jpg'),
 		#path.join(config['dir']['qc'],label,'{cancer}_{celltype}_VlnPlot_ribo.jpg'),

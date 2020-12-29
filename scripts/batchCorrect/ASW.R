@@ -18,8 +18,7 @@ useImmun=args[2]
 sce <- readRDS(file=infile)
 if(useImmun=='T'){
    meta <- colData(sce)
-   meta <- meta[grepl("-I",meta$orig.ident),]
-   sce <- sce[,rownames(meta)]
+   sce <- sce[,grepl("-I",rownames(meta))]
 }
 meta <- as.data.frame(colData(sce))
 meta <- meta[, colnames(meta)=='orig.ident' | grepl("snn", colnames(meta)) | grepl("_res.", colnames(meta))]
@@ -30,7 +29,7 @@ meta$orig.ident=sapply(strsplit(meta$orig.ident,"-"),"[",1)
 for(r in reducedDimNames(sce)){
     outfile <- gsub("walktrap_clustered",paste0(r, "_asw"),infile)
     if(useImmun=='T'){
-        outfile <- gsub("asw","ariImmun",outfile)
+        outfile <- gsub("asw","aswImmun",outfile)
     }
     plotfile <- paste0(plotDir, gsub("rds","jpg",basename(outfile)))
     if(!file.exists(outfile)){

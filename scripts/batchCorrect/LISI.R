@@ -10,7 +10,13 @@ suppressPackageStartupMessages({
 args  <- commandArgs(trailingOnly=T)
 infile=args[1]
 #infile=snakemake@input[[1]] #GEJ_QCed_*_walktrap_clustered.rds
+useImmun=args[2]
+
 sce <- readRDS(file=infile)
+if(useImmun=='T'){
+	meta <- colData(sce)
+        sce <- sce[,grepl("-I",rownames(meta))]
+}
 meta <- as.data.frame(colData(sce))
 meta <- meta[, colnames(meta)=='orig.ident' | grepl("snn", colnames(meta)) | grepl("_res.", colnames(meta))]
 walktrap_res <- which(grepl("snn",colnames(meta)) & !grepl("_res",colnames(meta)))
@@ -19,10 +25,15 @@ meta$orig.ident=sapply(strsplit(meta$orig.ident,"-"),"[",1)
 
 for(r in reducedDimNames(sce)){
     outfile <- gsub("walktrap_clustered",paste0(r, "_lisi"),infile)
+    if(useImmun=='T'){
+	outfile <- gsub("lisi","lisiImmun",outfile)
+    }
     if(!file.exists(outfile)){
         if(length(reducedDimNames(sce))>1){
                 df=meta[,colnames(meta)=="orig.ident" | grepl(tolower(r),colnames(meta))]
-        }
+        }else{
+		df=meta
+	}
         rd <- reducedDim(sce, type=r)
         lisi <- compute_lisi(X=rd, meta_data=df, label_colnames='orig.ident', perplexity=40)
 	res <- data.frame(BasedOn='all_cell',median=median(lisi[,1]),min=min(lisi[,1]),max=max(lisi[,1]),

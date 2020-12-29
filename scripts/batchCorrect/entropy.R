@@ -9,7 +9,13 @@ suppressPackageStartupMessages({
 args  <- commandArgs(trailingOnly=T)
 infile=args[1]
 #infile=snakemake@input[[1]] #GEJ_QCed_*_walktrap_clustered.rds
+useImmun=args[2]
+
 sce <- readRDS(file=infile)
+if(useImmun=='T'){
+   meta <- colData(sce)
+   sce <- sce[,grepl("-I",rownames(meta))]
+}
 meta <- as.data.frame(colData(sce))
 meta <- meta[, colnames(meta)=='orig.ident' | grepl("snn", colnames(meta)) | grepl("_res.", colnames(meta))]
 walktrap_res <- which(grepl("snn",colnames(meta)) & !grepl("_res",colnames(meta)))
@@ -17,7 +23,7 @@ colnames(meta)[walktrap_res]=gsub("snn","walktrap_snn",colnames(meta)[walktrap_r
 meta$orig.ident=sapply(strsplit(meta$orig.ident,"-"),"[",1)
 nbatches <- length(unique(meta$orig.ident))
 
-nworker=min(as.numeric(args[2]),length(availableWorkers()))
+nworker=min(as.numeric(args[3]),length(availableWorkers()))
 print(paste0("Use ",nworker, " workers"))
 plan("multiprocess", workers = nworker)
 options(future.globals.maxSize = 60*1024^3)
@@ -33,6 +39,9 @@ shannon_entropy <- function(x, batch_vector, N_batches) {
 
 for(r in reducedDimNames(sce)){
     outfile <- gsub("walktrap_clustered",paste0(r, "_knn50Entropy"),infile)
+    if(useImmun=='T'){
+        outfile <- gsub("Entropy","EntropyImmun",outfile)
+    }
     if(!file.exists(outfile)){
         if(length(reducedDimNames(sce))>1){
                 df=meta[,colnames(meta)=="orig.ident" | grepl(tolower(r),colnames(meta))]

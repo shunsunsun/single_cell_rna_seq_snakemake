@@ -1,5 +1,10 @@
 args  <- commandArgs(trailingOnly=T)
 n_cpu <- as.numeric(args[1])
+if(args[2]!=NULL){
+	n_pc <- as.numeric(args[2])
+}else{
+	n_pc <- 50
+}
 
 suppressPackageStartupMessages({
 	library(Seurat)
@@ -14,7 +19,8 @@ rseed=1129L
 set.seed(rseed)
 
 se <- readRDS(file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchCCA.rds")
-se <- RunPCA(se, verbose = FALSE) ##By default nPC=50
+#Do NOT run the ScaleData function after integration
+se <- RunPCA(se, verbose = FALSE, npcs=n_pc) ##By default npcs=50
 for (n in c(10,30,50)){
 	for(k in c(20,50,80)){
 		print(paste0("pc dimension: ",n,"; snn neighborhood: ",k))
@@ -24,6 +30,6 @@ for (n in c(10,30,50)){
 		se <- FindClusters(se, graph.name=paste0("ccapca",n,"_snn",k),resolution=seq(0.8,1.2,by=0.2),random.seed=rseed, method="igraph")
 	}
 }
-saveRDS(se, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchCCA_clustered.rds")
+#saveRDS(se, file="/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchCCA_clustered.rds")
 options(future.globals.maxSize = 500*1024^2) #500M
 plan(sequential)

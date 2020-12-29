@@ -27,7 +27,7 @@ rule biscuit:
 	params:
 		infile='{dataset}_QCed_4biscuit.rda',
 		outdir='{dataset}',
-		alpha=0.05
+		alpha=0.5
 	threads:
 		30
 	script:
