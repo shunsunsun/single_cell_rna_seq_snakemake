@@ -1,6 +1,5 @@
 suppressPackageStartupMessages({
-	library(sctransform)
-        library(Seurat)
+	library(Seurat)
 	library(tidyverse)
 	library(future)
 })
@@ -21,7 +20,7 @@ resVal <- as.numeric(unname(unlist(strsplit(resString,','))))
 if(length(resVal)>1){
         resString=paste0("c(",resString,")")
 }
-reducString <- snakemake@params[["reduc"]]
+#reducString <- snakemake@params[["reduc"]]
 nworker <- min(as.numeric(snakemake@threads),length(availableWorkers()))
 output <- snakemake@output[[1]]
 rseed=1129L
@@ -55,7 +54,7 @@ PreprocessSubsetData<- function(object,
                                 nn.eps = 0,
                                 resolution = seq(0.4,0.8,by=0.2),
 				#resolution = 0.4,
-				reduc = "pca",
+				#reduc = "pca",
                                 k.param = 30,
 				nworker = 8,
 				random.seed = 1129L,
@@ -66,36 +65,33 @@ PreprocessSubsetData<- function(object,
 	plan("multiprocess", workers = nworker)
 	options(future.globals.maxSize = 60*1024^3)
 
-	if(!grepl("glmpca", reduc)){
-	        regVars <- intersect(regVars, colnames(object[[]]))
-        	# SCTransform replaces NormalizeData, ScaleData and FindVariableFeatures
-	        object<- SCTransform(object, vars.to.regress = regVars, variable.features.n = 5000, verbose = FALSE)
+        meta.data.colnames<- object@meta.data %>% colnames()
+        regVars <- intersect(regVars, meta.data.colnames)
+        # default is on variable features only, omit the features argument
+        # SCTransform replaces NormalizeData, ScaleData and FindVariableFeatures
+        object<- SCTransform(object, vars.to.regress = regVars, variable.features.n = 5000, verbose = FALSE)
 
-		if(reduc == "pca"){
-		        object<- RunPCA(object = object, features = VariableFeatures(object = object), npcs = num.pc)
-		}
-		if(reduc == "harmony"){
-			suppressPackageStartupMessages(library(harmony))
-			object@meta.data$orig.ident=sapply(strsplit(object@meta.data$orig.ident,"-"),"[",1)
-			object <- RunPCA(object = object, verbose=F)		
-			object <- RunHarmony(object=object, assay.use = "SCT", reduction = "pca", dims.use = 1:50, group.by.vars = "orig.ident", plot_convergence = FALSE)				
-		}
-	}else{
-		suppressPackageStartupMessages({
-		        library(SeuratWrappers)
-		        library(glmpca)
-		})
-		reduc <- paste0(reduc,pc.use)			
-		m <- GetAssayData(object, slot = "counts", assay = "RNA")
-		devs <- scry::devianceFeatureSelection(m)
-		dev_ranked_genes <- rownames(object)[order(devs, decreasing = TRUE)]
-		ndim <- pc.use
-	        #Sparse matrices are coerced to dense matrice for  minibatch='none'; If this exhausts memory, consider setting minibatch to 'stochastic' or 'memoized'
-        	object <- RunGLMPCA(object, features = head(dev_ranked_genes,n=2000), L = ndim, minibatch='stochastic',
-	                reduction.name=reduc, reduction.key=paste0(toupper(reduc),"_"))
-	}
+	#if(reduc == "pca" && !("pca" %in% names(object@reductions))){	
+	        object<- RunPCA(object = object, features = VariableFeatures(object = object), npcs = num.pc)
+	#}
 
-        object <- FindNeighbors(object, dims = 1:pc.use, k.param = k.param, nn.eps = nn.eps, verbose = FALSE, reduction = reduc, force.recalc = TRUE)
+        if (is.null(pc.use)){
+                object<- JackStraw( object = object, num.replicate = 100, dims = num.pc)
+
+                object <- ScoreJackStraw(object = object, dims = 1:num.pc, score.thresh = score.thresh)
+
+                PC_pvalues<- object@reductions$pca@jackstraw@overall.p.values
+
+                ## determin how many PCs to use.
+                pc.use<- min(which(PC_pvalues[,"Score"] > sig.pc.thresh)) -1
+
+        }
+
+        # add significant pc number to metadata, need to have names same as the cells
+        #pc.use.meta<- rep(pc.use, length(colnames(object)))
+        #names(pc.use.meta)<- colnames(object)
+        #object<- AddMetaData(object = object, metadata = pc.use.meta, col.name = "pc.use")
+        object<- FindNeighbors(object, dims = 1:pc.use, k.param = k.param, nn.eps = nn.eps, verbose = FALSE, reduction = "pca", force.recalc = TRUE)
         object <- FindClusters(object = object, n.start = n.start, resolution = resolution, random.seed=random.seed, method="igraph", verbose = FALSE)
 	
 	options(future.globals.maxSize = 500*1024^2) #500M
@@ -109,22 +105,20 @@ subset_seurat_obj <- RandomSubsetData(seurat_obj, rate = rate)
 
 full_sample_clust <- list()
 for (c in colnames(subset_seurat_obj@meta.data)[grepl("_res.",colnames(subset_seurat_obj@meta.data))]){
-	r <- unname(unlist(strsplit(c,'res\\.')))[2]
-	full_sample_clust[[ paste0("res",r) ]] <- subset_seurat_obj[[c]]
+	full_sample_clust[[c]] <- subset_seurat_obj[[c]]
 	subset_seurat_obj[[c]] <- NULL #remove old clustering results to get ready for new ones
 }
 subset_seurat_obj$seurat_clusters <- NULL
 
 command<- paste("PreprocessSubsetData", "(", "subset_seurat_obj,", "k.param=", k, ",", "pc.use=", pc.use, ",", "resolution=", resString, ",",
-	"nworker=", nworker, ",", "random.seed=", rseed, ",", reducString, ",", PreprocessSubsetData_pars, ")")
-print(paste0("Command=",command))
+	"nworker=", nworker, ",", "random.seed=", rseed, ",", PreprocessSubsetData_pars, ")")
 subset_seurat_obj<- eval(parse(text=command))
 
 tmp_list <- list()
 i=1
 for (c in colnames(subset_seurat_obj[[]])[grepl("_res.",colnames(subset_seurat_obj[[]]))]){
     r <- unname(unlist(strsplit(c,'res\\.')))[2]
-    tmp_list[[i]] <- tibble::tibble(pc = pc.use, resolution = r, k_param = k, original_ident_full = list(full_sample_clust[[ paste0("res",r) ]]),
+    tmp_list[[i]] <- tibble::tibble(pc = pc.use, resolution = r, k_param = k, original_ident_full = list(full_sample_clust[[c]]),
 	recluster_ident = list(subset_seurat_obj[[c]]), round = run_id)
     i <- i+1
 }

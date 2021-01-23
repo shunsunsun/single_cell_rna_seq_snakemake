@@ -51,24 +51,28 @@ rule pca:
 		optimPC=path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_'+norm+'_optimalPC.txt')
 	params:
 		plot=path.join(config['dir']['plot'],'dimenReduct'),
-		nhvg=config['featSelect']['nFeature']				
+		nhvg=config['batchRm']['nFeature']				
 	script:
 		"../scripts/step8_dimRed_vstpca.R"
 
 
-ndim=str(config['glmpca']['ndim'])
+#ndim=str(config['glmpca']['ndim'])
 
 
 rule glm_pca:
 	input:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')		
-		path.join(config['dir']['data'],'{dataset}_QCed.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed.rds')
+		#path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}.rds')
+		path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}.rds')
 	output:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds')
-		path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds')
+		#path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_glmpca.rds')
+		path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_glmpca.rds')
 	params:
 		plot=path.join(config['dir']['plot'],'dimenReduct'),
-		nhvg=config['featSelect']['nFeature'],
+		nhvg=config['batchRm']['nFeature'],
 		ndims="10_20"
 		#ndim=config['glmpca']['ndim']
 	threads:
@@ -90,9 +94,11 @@ rule pca_all:
 rule glm_pca_all:
 	input:
 		#expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_glmpca_ndim'+ndim+'.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
-		expand(path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds'),dataset=['ESCC','GEJ'])
+		#expand(path.join(config['dir']['data'],'{dataset}_QCed_glmpcaReduct.rds'),dataset=['ESCC','GEJ'])
+                #expand(path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_glmpca.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
+                expand(path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_glmpca.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells'])
 	output:
-		path.join(config['dir']['log'],'glm_pca_all.finish')
+		path.join(config['dir']['log'],'glmpca_all.finish')
 	shell:
 		"touch {output}"
 

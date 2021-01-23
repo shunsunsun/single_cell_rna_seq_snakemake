@@ -17,7 +17,7 @@ full_rds <- snakemake@input[["full"]]
 sub_rds <- snakemake@input[["sub"]]
 outplot1 <- snakemake@output[[1]]
 outplot2 <- snakemake@output[[2]]
-outplot3 <- snakemake@output[[3]]
+#outplot3 <- snakemake@output[[3]]
 
 subsample_idents <- readRDS(file=sub_rds)
 fullsample_idents <- readRDS(file=full_rds)
@@ -114,13 +114,13 @@ p1 <- ParameterSetScatterPlot(stable_clusters = stable_clusters,
                         facet_cols = "pc")
 ggsave(p1, file= outplot1, width=4, height=5, units="in")			
 					
-p2=ParameterSetScatterPlot(stable_clusters = stable_clusters,
-                        fullsample_idents = fullsample_idents,
-                        x_var = "resolution",
-                        y_var = "number",
-                        facet_rows = "k_param",
-                        facet_cols = "pc")
-ggsave(p2, file= outplot2, width=4, height=5, units="in")						
+#p2=ParameterSetScatterPlot(stable_clusters = stable_clusters,
+#                        fullsample_idents = fullsample_idents,
+#                        x_var = "resolution",
+#                        y_var = "number",
+#                        facet_rows = "k_param",
+#                        facet_cols = "pc")
+#ggsave(p2, file= outplot2, width=4, height=5, units="in")						
 					
 #Calculate percentage of cells in stable clusters
 stable_and_full<- left_join(stable_clusters, fullsample_idents)
@@ -134,4 +134,4 @@ p3 <- ParameterSetScatterPlot(stable_clusters = stable_clusters,
                         y_var = "percentage",
                         facet_rows = "resolution",
                         facet_cols = "pc") + ggtitle("percentage of cells in stable clusters")
-ggsave(p3, file= outplot3, width=4, height=5, units="in")
+ggsave(p3, file= outplot2, width=4, height=5, units="in")

@@ -36,10 +36,14 @@ rule harmony:
 	input:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'.rds')	
 		#path.join(config['dir']['data'],'{dataset}_QCed_'+hmynorm+'.rds')
-		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+                path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm.rds')
+                #path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm.rds')		
 	output:
 		#rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_'+norm+'_BatchHmy.rds')
-		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds')
+                path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm_BatchHmy.rds')
+                #path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm_BatchHmy.rds')
 	#params:
 	#	#norm4harmony=hmynorm,
 	#	theta=config['batchRm']['harmony_theta'],
@@ -152,7 +156,9 @@ rule cca_all:
 
 rule harmony_all:
 	input:
-		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds'),dataset=['ESCC','GEJ'])
+		#expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchHmy.rds'),dataset=['ESCC','GEJ'])
+                #expand(path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm_BatchHmy.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
+                expand(path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm_BatchHmy.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
 	output:
 		path.join(config['dir']['log'],'harmony.finish')
 	shell:

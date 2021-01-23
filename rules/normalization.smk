@@ -8,9 +8,13 @@ if 'pipe' in config['qc']['strategy']:
 
 rule sctNormalize:
 	input:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')
+		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}.rds')
+		#path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}.rds')
 	output:
-		path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_sctNorm.rds')
+		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_sctNorm.rds')
+		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm.rds')
+		#path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm.rds')
 	params:
 		regressNum=config['norm']['regressNum'],		
 		ccgenes=path.join(config['dir']['resources'],'cycle.rda'),
@@ -18,7 +22,8 @@ rule sctNormalize:
 	threads:
 		20
 	script:
-		"../scripts/step6_scTransform.R"
+		#"../scripts/step6_scTransform.R"
+		"../scripts/step6_scTransform_subset.R"
 
 
 rule logNormalize:
@@ -43,9 +48,11 @@ if 'log' in config['norm']['method']:
 
 rule whole_normalize_all:
 	input:
-		expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_'+norm+'.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		#expand(path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_'+norm+'.rds'),cancer=['ESCC','GEJ'],celltype=['EP','IM'])
+		expand(path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
+		#expand(path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
 	output:
-		path.join(config['dir']['log'],'whole_norm_all.finish')
+		path.join(config['dir']['log'],'norm_all.finish')
 	shell:
 		"touch {output}"
 

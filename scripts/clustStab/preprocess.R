@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
 })
 
 ## see https://bitbucket.org/snakemake/snakemake/issues/917/enable-stdout-and-stderr-redirection
-log <- file(snakemake@log[[1]], open="wt")
-sink(log)
-sink(log, type="message")
+#log <- file(snakemake@log[[1]], open="wt")
+#sink(log)
+#sink(log, type="message")
 
 seurat_obj<- readRDS(snakemake@input[[1]])
 k <- snakemake@wildcards[["k"]]
@@ -18,6 +18,7 @@ if(length(resVal)>1){
 	resString=paste0("c(",resString,")")
 }
 print(paste0(resString, ":", resVal))
+reducString <- snakemake@params[["reduc"]]
 nworker <- min(as.numeric(snakemake@threads),length(availableWorkers()))
 output <- snakemake@output[[1]]
 PreprocessSubsetData_pars<- snakemake@params[["PreprocessSubsetData_pars"]]
@@ -34,6 +35,7 @@ PreprocessSubsetData<- function(object,
                                 nn.eps = 0,
                                 resolution = seq(0.4,0.8,by=0.2),
 				#resolution = 0.4,
+				reduc = "pca",
                                 k.param = 30,
 				random.seed=1129L,
                                 ...){
@@ -45,31 +47,27 @@ PreprocessSubsetData<- function(object,
 	set.seed(random.seed)
 
 
-	#Do NOT run the ScaleData function after integration
-	object <- RunPCA(object, verbose = FALSE, npcs=num.pc, features = VariableFeatures(object = object)) ##the default value of npcs = the default value of num.pc = 50
+	#https://satijalab.org/seurat/v3.0/integration.html
+	if(reduc == "pca" && !("pca" %in% names(object@reductions))){
+		object <- RunPCA(object, verbose = FALSE, npcs=num.pc, features = VariableFeatures(object = object)) ##the default value of npcs = the default value of num.pc = 50
+	}
+	if(reduc == "glmpca"){
+		reduc <- paste0(reduc,pc.use)
+		print(paste0("reduc=",reduc))
+	}
+
+#       if (is.null(pc.use)){
+#               object<- JackStraw( object = object, num.replicate = 100, dims = num.pc)
+#               object <- ScoreJackStraw(object = object, dims = 1:num.pc, score.thresh = score.thresh)
+#               PC_pvalues<- object@reductions$pca@jackstraw@overall.p.values
+#               ## determin how many PCs to use
+#               pc.use<- min(which(PC_pvalues[,"Score"] > sig.pc.thresh)) -1
+#       }
 	
-        if (is.null(pc.use)){
-                object<- JackStraw( object = object, num.replicate = 100, dims = num.pc)
-
-                object <- ScoreJackStraw(object = object, dims = 1:num.pc, score.thresh = score.thresh)
-
-                PC_pvalues<- object@reductions$pca@jackstraw@overall.p.values
-
-                ## determin how many PCs to use.
-                pc.use<- min(which(PC_pvalues[,"Score"] > sig.pc.thresh)) -1
-
-        }
-	
-	# add significant pc number to metadata, need to have names same as the cells
-        pc.use.meta<- rep(pc.use, length(colnames(object)))
-        names(pc.use.meta)<- colnames(object)
-        object<- AddMetaData(object = object, metadata = pc.use.meta, col.name = "pc.use")
-	
-	object <- FindNeighbors(object,reduction='pca',dims=1:pc.use,k.param=k.param,verbose=FALSE,force.recalc=TRUE)
+	object <- FindNeighbors(object,reduction=reduc,dims=1:pc.use,k.param=k.param,verbose=FALSE,force.recalc=TRUE)
 	
 	#Enable method = "igraph" to avoid casting large data to a dense matrix
-	object <- FindClusters(object, reduction='pca', n.start=n.start, resolution=resolution,
-		random.seed=random.seed, method="igraph",verbose=FALSE)
+	object <- FindClusters(object, n.start=n.start, resolution=resolution, random.seed=random.seed, method="igraph",verbose=FALSE)
 	
 	options(future.globals.maxSize = 500*1024^2) #500M
 	plan(sequential)
@@ -79,6 +77,8 @@ PreprocessSubsetData<- function(object,
 
 
 ## this is not subsetted data, but the PreprocessSubsetData function can be used as well for any seurat object
-seurat_obj<- eval(parse(text=paste("PreprocessSubsetData", "(", "seurat_obj,", "k.param=", k, ",", "resolution=", resString, ",",
-	"pc.use=", pc.use, ",", "nworker=", nworker, ",", "random.seed=", rseed, ",", PreprocessSubsetData_pars, ")")))
+command <- paste("PreprocessSubsetData", "(", "seurat_obj,", "k.param=", k, ",", "resolution=", resString, ",",
+        "pc.use=", pc.use, ",", "nworker=", nworker, ",", "random.seed=", rseed, ",", reducString, ",", PreprocessSubsetData_pars, ")")
+print(paste0("Command=",command))
+seurat_obj<- eval(parse(text=command))
 saveRDS(seurat_obj,file=output)
