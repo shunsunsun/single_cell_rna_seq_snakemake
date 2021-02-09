@@ -9,33 +9,11 @@ infile <- args[1]
 outprefix <- args[2] #including absolute path
 
 
-####DotPlot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+####DotPlot for ACGEJ
 
 #immune (CD45+,PTPRC), epithelial/cancer (EpCAM+,EPCAM), and stromal (CD10+,MME,fibo or CD31+,PECAM1,endo) 
 genes_to_check = c("PTPRC","EPCAM",'PECAM1','MME',"CD3G","CD3E", "CD79A")
+
 imm <- c(1,2,3,4,5,6,9,10,11,12,14,15)
 epi <- 0
 stro <- c(7,8,13)
@@ -50,6 +28,7 @@ ggsave(plot=p, filename="./plot/markerGenes/ACGEJ_generalMarker_dotPlot.pdf", wi
 #Immune Markers, used for differing between primary immune cell types
 cells.use <- row.names(se@meta.data)[which(se@meta.data$celltype=='immune')]
 se <- subset(se, cells=cells.use)
+
 tc <- c(2,3,5,6,10,11,14)
 bc <- c(1,9)
 se@meta.data$celltype <- ifelse(se@meta.data$integrated_snn_res.0.4 %in% tc ,'TCells',
@@ -70,6 +49,43 @@ genes_to_check=setdiff(unique(genes_to_check[genes_to_check$cell!="Neutrophils",
 p <- DotPlot(se, features = genes_to_check, assay="RNA", group.by='group') #+ coord_flip()
 p + theme(axis.text.x=element_text(size=0.5,angle=90),axis.text.y=element_text(size=0.5,color="blue"),legend.text=element_text(size=0.5))
 ggsave(plot=p, filename="./plot/markerGenes/ACGEJ_immuneMarker_dotPlot.pdf", width=20, height=5, units="in", dpi=300)
+
+
+####DotPlot for ESCC
+
+genes_to_check = c("PTPRC","EPCAM",'PECAM1','MME',"CD3G","CD3E", "CD79A","KRT8","KRT18")
+imm <- c(1,3,9,11,5,10,4,15,14)
+epi <- c(0,12)
+stro <- c(2,6,7,13,16)
+others <- 8
+se@meta.data$celltype <- ifelse(se@meta.data$SCT_snn_res.0.2  %in% imm ,'immune',
+    ifelse(se@meta.data$SCT_snn_res.0.2  %in% epi ,'epi',
+    ifelse(se@meta.data$SCT_snn_res.0.2  %in% stro, 'stromal', 'others')))
+table(se@meta.data$celltype)
+se@meta.data$group=paste(se@meta.data$celltype,se@meta.data$SCT_snn_res.0.2)
+p <- DotPlot(se, features = genes_to_check, assay="RNA", group.by='group')
+ggsave(plot=p, filename="./plot/markerGenes/ESCC_generalMarker_dotPlot.pdf", width=10, height=5, units="in", dpi=300)
+
+#General Cell Markers, used for differing between non-immune and immune cell types as well as non immuen epithelial cell types
+genes_to_check=c('PTPRC','CD3G','CD3E','CD79A','BLNK','CD68','CSF1R','MARCO','CD207','PMEL','MLANA','PECAM1','CD34','VWF','EPCAM','SFN','KRT19','ACTA2','MCAM','MYLK','MYL9','FAP','THY1','ALB')
+se@meta.data$celltype2=paste(se@meta.data$celltype,se@meta.data$SCT_snn_res.0.2)
+
+#Immune Markers, used for differing between primary immune cell types
+cells.use <- row.names(se@meta.data)[which(se@meta.data$celltype=='immune')]
+se <- subset(se, cells=cells.use)
+tc <- c(1,3,9,11)
+bc <- c(5,10)
+se@meta.data$celltype <- ifelse(se@meta.data$SCT_snn_res.0.2 %in% tc ,'TCells',
+    ifelse(se@meta.data$SCT_snn_res.0.2 %in% bc, 'BCells', 
+	ifelse(se@meta.data$SCT_snn_res.0.2 == '4', 'Macrophages',
+	ifelse(se@meta.data$SCT_snn_res.0.2 == '14', 'Mast',
+	ifelse(se@meta.data$SCT_snn_res.0.2 == '15', 'Dendritic', 'Unknown')))))
+se@meta.data$group=paste(se@meta.data$celltype,se@meta.data$SCT_snn_res.0.2)
+genes_to_check=fread(file="./resources/broad_cell_markers_immune.csv",header=T,data.table=F)
+genes_to_check=setdiff(unique(genes_to_check[genes_to_check$cell!="Neutrophils", ]$gene),'CCL3L1')
+p <- DotPlot(se, features = genes_to_check, assay="RNA", group.by='group') #+ coord_flip()
+p + theme(axis.text.x=element_text(size=0.5,angle=90),axis.text.y=element_text(size=0.5,color="blue"),legend.text=element_text(size=0.5))
+ggsave(plot=p, filename="./plot/markerGenes/ESCC_immuneMarker_dotPlot.pdf", width=20, height=5, units="in", dpi=300)
 
 
 

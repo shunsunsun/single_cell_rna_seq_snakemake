@@ -1,4 +1,4 @@
-##Example: for k in 40 60 80; do for pc in 30 50; do sbatch -p cn_icg -A gaog_g1 --qos=gaogcnicg -N 1 -n 1 -c 20 ./runRscript.sh preprocess.R ./full_sample_preprocess/full_sample_k_${k}_PC_${pc}.rds ${k} ${pc} 20; sleep 1; done; done
+##Example: for k in 40 60 80; do for pc in 30 50; do sbatch -p cn_icg -A gaog_g1 --qos=gaogcnicg -N 1 -n 1 -c 20 ./runRscript.sh addClustering.R ./full_sample_preprocess/full_sample_k_${k}_PC_${pc}.rds ${k} ${pc} 20; sleep 1; done; done
 
 suppressPackageStartupMessages({
 	library(Seurat)

@@ -3,11 +3,15 @@ suppressPackageStartupMessages(library(Seurat))
 suppressPackageStartupMessages(library(harmony))
 
 args  <- commandArgs(trailingOnly=T)
-celltype <- args[1] #TCells, BCells, Monocytes, ImmuneCells, EpithelialCells, StromalCells
-workdir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/Combined/"
-infile <- paste0(workdir,celltype,"_sctNorm_CCA.rds")
-targetAssay <- "integrated"
-outfile <- gsub(".rds","_Hmy.rds",infile)
+#celltype <- args[1] #TCells, BCells, Monocytes, ImmuneCells, EpithelialCells, StromalCells
+#workdir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/Combined/"
+#infile <- paste0(workdir,celltype,"_sctNorm_CCA.rds")
+#targetAssay <- "integrated"
+#outfile <- gsub(".rds","_Hmy.rds",infile)
+
+infile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm.rds"
+outfile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm_BatchHmy.rds"
+targetAssay <- "SCT"
 
 # https://github.com/immunogenomics/harmony/issues/41#issuecomment-633885490
 # if samples from different techical platforms, try https://github.com/immunogenomics/harmony/issues/41#issuecomment-642862186

@@ -77,12 +77,12 @@ plotfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/
 		se <- RunUMAP(se, reduction=reduc, dims=1:nPC, n.neighbors=k)
 		saveRDS(se,file=infile)
 	}	
-	se[["SingleR_label"]] <- clust.pred$labels[match(clustRes, rownames(clust.pred))]
 	meta <- se@meta.data
-	clust <- colnames(meta)[grepl("_res\\.", colnames(meta))]
+	clustRes <- colnames(meta)[grepl("_res\\.", colnames(meta))]
+        se[["SingleR_label"]] <- clust.pred$labels[match(clustRes, rownames(clust.pred))]
 	se[["facs"]] <- ifelse(grepl("-E", meta$ident), "CD45-", "CD45+")
 	#my_color_palette <- DiscretePalette(n=length(unique(se[[clust, drop=TRUE]])), palette = "alphabet")
-	p1 = DimPlot(se, group.by=clust, label=T, reduction="umap") + NoLegend()
+	p1 = DimPlot(se, group.by=clustRes, label=T, reduction="umap") + NoLegend()
 	p2 = DimPlot(se, group.by="SingleR_label", label=T, label.size=3, reduction="umap") + NoLegend()
 #	ggsave(filename=plotfile, plot=p2, width=5, height=4, units="in", dpi=300)
 	p3 = DimPlot(se, group.by="facs", label=F, reduction="umap")
