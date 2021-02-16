@@ -1,4 +1,5 @@
 #Ref: https://hbctraining.github.io/scRNA-seq/lessons/09_merged_SC_marker_identification.html
+#https://github.com/satijalab/seurat/issues/2180
 
 suppressPackageStartupMessages({
 	library(Seurat)
@@ -8,12 +9,16 @@ suppressPackageStartupMessages({
 
 args  <- commandArgs(trailingOnly=T)
 infile <- args[1]
-outfile1 <- gsub(".rds","_conservedMarkers.rda",infile)
-outfile2 <- gsub(".rds","_allMarkers.rda",infile)
-plotPrefix <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/",
-        gsub("_clustStab","", basename(dirname(infile))))
+sctransform <- args[2] #T or F
+assay_used <- ifelse(sctransform=="T","SCT","RNA")
+affix <- ifelse(sctransform=="T","_sct","")
+outfile1 <- gsub(".rds",paste0(affix,"_conservedMarkers.rda"),infile)
+outfile2 <- gsub(".rds",paste0(affix,"_allMarkers.rda"),infile)
+#plotPrefix <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/",
+#        gsub("_clustStab","", basename(dirname(infile))))
 annotations <- read.csv("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/resources/annotation.csv")
-nworker <- min(as.numeric(args[2]),length(availableWorkers()))
+
+nworker <- min(as.numeric(args[3]),length(availableWorkers()))
 cat(sprintf("Use %d workders\n",nworker))
 plan("multiprocess", workers = nworker)
 options(future.globals.maxSize = 60*1024^3) #60G
@@ -23,7 +28,7 @@ set.seed(randSeed)
 se <- readRDS(file=infile)
 clustRes <- colnames(se@meta.data)[grepl("_res\\.", colnames(se@meta.data))]
 Idents(se) <- clustRes
-DefaultAssay(se) <- "RNA"
+#DefaultAssay(se) <- "RNA"
 
 #Get conserved markers for any given cluster
 #It is possible that when you run this function on all clusters, in some cases you will have clusters 
@@ -32,8 +37,8 @@ DefaultAssay(se) <- "RNA"
 get_conserved <- function(cluster){
     tryCatch({
 	markers <- FindConservedMarkers(se, ident.1 = cluster,
-          	grouping.var = "orig.ident", only.pos = TRUE,
-		min.pct = 0.25, logfc.threshold = 0.25)
+        assay=assay_used, slot="data", grouping.var = "orig.ident", 
+	only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 	markers <- markers %>% rownames_to_column(var = "gene") %>%
 	    left_join(y = unique(annotations[, c("gene_name", "description")]),
                by = c("gene" = "gene_name")) %>% cbind(cluster_id = cluster, .)
@@ -58,7 +63,7 @@ for(i in unique(se[[clustRes,drop=TRUE]])){
   }
 }
 save(conserved_markers_list, file=outfile1)
-all_markers <- FindAllMarkers(object = se, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+all_markers <- FindAllMarkers(object = se, assay=assay_used, slot="data", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 save(all_markers, file=outfile2)
 
 options(future.globals.maxSize = 500*1024^2) #500M
@@ -66,14 +71,4 @@ plan(sequential)
 
 
 ##Analyze the results
-library(dplyr)
-load(file=outfile)
-clusts <- names(conserved_markers_list)
-for(c in clusts){
-	markers <- conserved_markers_list[[c]]
-	fold_change <- which(grepl("avg_logFC", colnames(markers)))
-        markers$sample_avg_lfc <- apply(markers, 1, function(x){
-		return(mean(as.numeric(unname(x[fold_change]))))
-        })
-	markers %>% select(gene, max_pval, sample_avg_lfc, description) %>% arrange(desc(sample_avg_lfc))
-}
+##Check analyzeMarkerGenes.R
