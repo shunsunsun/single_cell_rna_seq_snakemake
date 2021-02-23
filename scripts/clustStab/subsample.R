@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 #sink(log)
 #sink(log, type="message")
 
-seurat_obj<- readRDS(snakemake@input[[1]])
+subset_seurat_obj<- readRDS(snakemake@input[[1]])
 k<- snakemake@wildcards[["k"]]
 pc.use<- snakemake@wildcards[["pc"]]
 run_id<- snakemake@wildcards[["run_id"]]
@@ -69,7 +69,7 @@ PreprocessSubsetData<- function(object,
 	if(!grepl("glmpca", reduc)){
 	        regVars <- intersect(regVars, colnames(object[[]]))
         	# SCTransform replaces NormalizeData, ScaleData and FindVariableFeatures
-	        object<- SCTransform(object, vars.to.regress = regVars, variable.features.n = 5000, verbose = FALSE)
+	        object<- SCTransform(object, vars.to.regress = regVars, verbose = FALSE)
 
 		if(reduc == "pca"){
 		        object<- RunPCA(object = object, features = VariableFeatures(object = object), npcs = num.pc)
@@ -78,7 +78,7 @@ PreprocessSubsetData<- function(object,
 			suppressPackageStartupMessages(library(harmony))
 			object@meta.data$orig.ident=sapply(strsplit(object@meta.data$orig.ident,"-"),"[",1)
 			object <- RunPCA(object = object, verbose=F)		
-			object <- RunHarmony(object=object, assay.use = "SCT", reduction = "pca", dims.use = 1:50, group.by.vars = "orig.ident", plot_convergence = FALSE)				
+			object <- RunHarmony(object=object, assay.use = "SCT", dims.use = 1:50, reduction = "pca", group.by.vars = "orig.ident", plot_convergence = FALSE)	
 		}
 	}else{
 		suppressPackageStartupMessages({
@@ -105,7 +105,7 @@ PreprocessSubsetData<- function(object,
 }
 
 
-subset_seurat_obj <- RandomSubsetData(seurat_obj, rate = rate)
+subset_seurat_obj <- RandomSubsetData(subset_seurat_obj, rate = rate)
 
 full_sample_clust <- list()
 for (c in colnames(subset_seurat_obj@meta.data)[grepl("_res.",colnames(subset_seurat_obj@meta.data))]){
@@ -113,7 +113,9 @@ for (c in colnames(subset_seurat_obj@meta.data)[grepl("_res.",colnames(subset_se
 	full_sample_clust[[ paste0("res",r) ]] <- subset_seurat_obj[[c]]
 	subset_seurat_obj[[c]] <- NULL #remove old clustering results to get ready for new ones
 }
-subset_seurat_obj$seurat_clusters <- NULL
+if("seurat_clusters" %in% colnames(subset_seurat_obj@meta.data)){
+	subset_seurat_obj$seurat_clusters <- NULL
+}
 
 command<- paste("PreprocessSubsetData", "(", "subset_seurat_obj,", "k.param=", k, ",", "pc.use=", pc.use, ",", "resolution=", resString, ",",
 	"nworker=", nworker, ",", "random.seed=", rseed, ",", reducString, ",", PreprocessSubsetData_pars, ")")

@@ -21,23 +21,20 @@ for(i in 1:length(marker_list)){
 	celltype=names(marker_list)[i]
 	markergenes=marker_list[[celltype]]
 	print(paste(intersect(markergenes,allgenes),collapse=","))
-	dot_plot <- paste0(plotPrefix,"_",celltype,"_dotPlot.jpg")
+	dot_plot <- paste0(plotPrefix,"_",celltype,"_dotPlot.pdf")
 	#if(!file.exists(dot_plot)){
-		jpeg(file=dot_plot,width=30,height=4*length(markergenes),unit="cm",res=300)
-		DotPlot(se, features=markergenes,group.by='seurat_clusters')+coord_flip()
-		dev.off()
+		p <- DotPlot(se, features=markergenes,group.by='seurat_clusters')+coord_flip()
+		ggsave(filename=dot_plot, plot=p, width=15, height=3*length(markergenes),unit="in",dpi=300)
 	#}
-	feat_plot <- paste0(plotPrefix,"_",celltype,"_featurePlot.jpg")
-	#if(!file.exists(feat_plot)){
-		jpeg(file=feat_plot,width=50,height=ceiling(length(markergenes)/2)*20,unit="cm",res=300)
-		FeaturePlot(se,reduction=paste0(reducPrefix,"_umap"),features=markergenes,order=T,min.cutoff='q10',repel=T,ncol=min(length(markergenes),2))
-		dev.off()	
+	feat_plot <- paste0(plotPrefix,"_",celltype,"_featurePlot.pdf")
+	#if(!file.exists(feat_plot)){		
+		p <- FeaturePlot(se,reduction=paste0(reducPrefix,"_umap"),features=markergenes,order=T,min.cutoff='q10',repel=T,ncol=min(length(markergenes),2))
+		ggsave(filename=feat_plot, plot=p, width=10, height=ceiling(length(markergenes)/2)*4,unit="in",dpi=300)
 	#}
-	vln_plot <- paste0(plotPrefix,"_",celltype,"_vlnPlot.jpg")
+	vln_plot <- paste0(plotPrefix,"_",celltype,"_vlnPlot.pdf")
 	#if(!file.exists(vln_plot)){
-		jpeg(file=vln_plot,width=50,height=ceiling(length(markergenes)/2)*20,unit="cm",res=300)
-		VlnPlot(se,features=markergenes,ncol=min(length(markergenes),2))
-		dev.off()
+		p <- VlnPlot(se,features=markergenes,ncol=min(length(markergenes),2))
+		ggsave(filename=vln_plot, plot=p, width=10, height=ceiling(length(markergenes)/2)*4,unit="in",dpi=300)
 	#}
 }
 write("Done",file=outfile)

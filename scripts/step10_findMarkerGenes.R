@@ -1,5 +1,7 @@
-suppressPackageStartupMessages(library(Seurat))
-suppressPackageStartupMessages(library(future))
+suppressPackageStartupMessages({
+	library(Seurat)
+	library(future)
+})
 
 infile <- snakemake@input[[1]]
 outfile <- snakemake@output[[1]]
@@ -17,7 +19,8 @@ randSeed <- 1129L
 set.seed(randSeed)
 
 outPrefix=paste0(outdir,"/",gsub("clustered.rds","",basename(infile)))
-for(i in unique(se@meta.data$seurat_clusters)){
+clustRes <- colnames(se@meta.data)[grepl(".res", colnames(se@meta.data))]
+for(i in unique(clustRes)){
   markers_df <- FindMarkers(object = se, ident.1 = i, min.pct = 0.25)
   print(x = head(markers_df))
   markers_genes = rownames(head(x = markers_df, n = 5))

@@ -75,6 +75,8 @@ rule glm_pca:
 		nhvg=config['batchRm']['nFeature'],
 		ndims="10_20"
 		#ndim=config['glmpca']['ndim']
+	wildcard_constraints:
+		celltype='[a-zA-Z]'
 	threads:
 		10
 	script:

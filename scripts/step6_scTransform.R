@@ -30,7 +30,7 @@ options(future.globals.maxSize = 20*1024^3) #20G
 set.seed(1129)
 
 # https://github.com/immunogenomics/harmony/issues/41#issuecomment-633885490
-# if samples from different techical platforms, try https://github.com/immunogenomics/harmony/issues/41#issuecomment-642862186
+# if samples from different technical platforms, try https://github.com/immunogenomics/harmony/issues/41#issuecomment-642862186
 if(!snakemake@params[["sctPreNorm"]]){
 	tryCatch({
                	tmp <- NormalizeData(flted_se)

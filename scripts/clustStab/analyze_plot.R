@@ -103,7 +103,7 @@ subsample_idents_list<- subsample_idents %>%
 #Assign stable clusters					
 stable_clusters<- subsample_idents_list %>%
   mutate(stable_cluster = map(data, ~ AssignStableCluster(.x$original_ident_full,
-  .x$recluster_ident, jaccard_cutoff = 0.8, method = "jaccard_percent", percent_cutoff = 0.8)))					
+  .x$recluster_ident, jaccard_cutoff = 0.6, method = "jaccard_percent", percent_cutoff = 0.6)))					
 
 #plot scatter plot for different parameters sets				
 p1 <- ParameterSetScatterPlot(stable_clusters = stable_clusters,

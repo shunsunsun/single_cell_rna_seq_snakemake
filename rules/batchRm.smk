@@ -9,9 +9,11 @@
 rule cca_integration:
 	input:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_sctNorm.rds')
-		path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+		#path.join(config['dir']['data'],'{dataset}_QCed_sctNorm.rds')
+		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm_BatchHmy.rds')
 	output:
-		rds=path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds')
+		#rds=path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds')
+		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm_BatchCCA.rds')
 		#rds=path.join(config['dir']['data'],'{cancer}_{celltype}_'+inData+'_BatchS3.rds')
 		#pca=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_pca.jpg'),
 		#tsne=path.join(config['dir']['plot'],'integrate','{cancer}_{celltype}_'+inData+'_BatchS3_tsne.jpg'),
@@ -147,7 +149,9 @@ rule scanorama_all:
 
 rule cca_all:
 	input:
-		expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds'),dataset=['ESCC','GEJ'])
+		#expand(path.join(config['dir']['data'],'{dataset}_QCed_sctNorm_BatchCCA.rds'),dataset=['ESCC','GEJ'])
+		expand(path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm_BatchCCA.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
+		#expand(path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm_BatchCCA.rds'),celltype=['Monocytes','TCells','BCells','ImmuneCells','StromalCells','EpithelialCells'])
 	output:
 		path.join(config['dir']['log'],'cca.finish')
 	shell:

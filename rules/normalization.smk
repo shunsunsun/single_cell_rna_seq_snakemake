@@ -9,12 +9,12 @@ if 'pipe' in config['qc']['strategy']:
 rule sctNormalize:
 	input:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'.rds')
-		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}.rds')
-		#path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}.rds')
+		#path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}.rds')
+		path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}.rds')
 	output:
 		#path.join(config['dir']['data'],'{cancer}_{celltype}_'+flt+'_sctNorm.rds')
-		path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm.rds')
-		#path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm.rds')
+		#path.join(config['dir']['data'],'GEJ_QCed_sctNorm_BatchCCA_clustStab','{celltype}_sctNorm.rds')
+		path.join(config['dir']['data'],'ESCC_QCed_sctNorm_BatchHmy_clustStab','{celltype}_sctNorm.rds')
 	params:
 		regressNum=config['norm']['regressNum'],		
 		ccgenes=path.join(config['dir']['resources'],'cycle.rda'),

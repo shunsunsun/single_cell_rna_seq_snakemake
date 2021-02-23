@@ -20,7 +20,8 @@ options(future.globals.maxSize = 70*1024^3)
 set.seed(1129)
 
 se <- readRDS(file=infile)
-se <- DietSeurat(se, assays=c("RNA","SCT"), dimreducs="pca")
+#se <- DietSeurat(se, assays=c("RNA","SCT"), dimreducs="pca")
+se <- DietSeurat(se, assays=c("RNA","SCT"))
 
 se@meta.data$orig.ident=sapply(strsplit(se@meta.data$orig.ident,"-"),"[",1)
 meta <- se@meta.data
