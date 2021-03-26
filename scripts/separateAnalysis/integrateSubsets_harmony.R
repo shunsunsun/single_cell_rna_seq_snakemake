@@ -43,7 +43,7 @@ if(regressNum=="T"){
     regVars=c('mitoCountRatio')
 }
 
-se <- SCTransform(se, variable.features.n=5000, vars.to.regress = c(regVars, 'cc_difference'))
+se <- SCTransform(se, variable.features.n=3000, vars.to.regress = c(regVars, 'cc_difference'))
 se <- RunPCA(object=se, verbose=T)  ##https://satijalab.org/seurat/v3.2/sctransform_vignette.html
 se@meta.data$orig.ident=sapply(strsplit(se@meta.data$orig.ident,"-"),"[",1)
 se <- RunHarmony(object=se, assay.use = "SCT", reduction = "pca", dims.use = 1:50, group.by.vars = "orig.ident", plot_convergence = FALSE)

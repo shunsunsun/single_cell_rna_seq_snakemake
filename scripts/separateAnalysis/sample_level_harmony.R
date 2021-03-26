@@ -9,15 +9,25 @@ args  <- commandArgs(trailingOnly=T)
 #targetAssay <- "integrated"
 #outfile <- gsub(".rds","_Hmy.rds",infile)
 
-infile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm.rds"
-outfile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm_BatchHmy.rds"
+#infile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm.rds"
+infile <- args[1]
+#outfile <- "../../data/ESCC_QCed_sctNorm_BatchHmy_clustStab/EpithelialCells_sctNorm_BatchHmy.rds"
+outfile <- args[2]
+rmTRBV <- args[3] #T or F
 targetAssay <- "SCT"
+
 
 # https://github.com/immunogenomics/harmony/issues/41#issuecomment-633885490
 # if samples from different techical platforms, try https://github.com/immunogenomics/harmony/issues/41#issuecomment-642862186
 
 se <- readRDS(file=infile)
 se@meta.data$orig.ident=sapply(strsplit(se@meta.data$orig.ident,"-"),"[",1)
-se <- RunPCA(object=se, verbose=T)  ##https://satijalab.org/seurat/v3.2/sctransform_vignette.html
+if(rmTRBV=="T"){
+	hvg <- se@assays$SCT@var.features
+	hvg <- hvg[!grepl("TRBV",hvg)]
+	se <- RunPCA(object=se, features=hvg, verbose=T)  ##https://satijalab.org/seurat/v3.2/sctransform_vignette.html
+}else{
+	se <- RunPCA(object=se, verbose=T)
+}
 se <- RunHarmony(object=se, assay.use = targetAssay, reduction = "pca", dims.use = 1:50, group.by.vars = "orig.ident", plot_convergence = FALSE)
 saveRDS(se, file=outfile)

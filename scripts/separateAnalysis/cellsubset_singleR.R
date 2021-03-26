@@ -7,7 +7,8 @@ suppressPackageStartupMessages({
 	library(patchwork)
 })
 
-ref <- "hpca_be_dice_nh_mi"
+#ref <- "hpca_be_dice_nh_mi"
+ref <- "dice_nh_mi"
 label <- "label.fine" #label.main or label.fine
 refdir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/resources/SingleRdata"
 samplefile <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/config/sample_cancertype.txt"
@@ -33,7 +34,8 @@ if(grepl("Combined", infile)){
 	type="gej"
 }
 
-outfile <- gsub(".rds",paste0("_singleR_",label,".rda"),infile)
+#outfile <- gsub(".rds",paste0("_singleR_",label,".rda"),infile)
+outfile <- gsub(".rds",paste0("_singleR_immu",label,".rda"),infile)
 plotfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/",
        type, "_", gsub("rda","pdf", basename(outfile)))
 
@@ -96,14 +98,18 @@ plotfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/
         se[["SingleR_label"]] <- clust.pred$labels[match(clustRes, rownames(clust.pred))]
 	#my_color_palette <- DiscretePalette(n=length(unique(se[[clust, drop=TRUE]])), palette = "alphabet")
 	p1 = DimPlot(se, group.by=clustResCol, label=T, reduction="umap") + NoLegend()
+	#p1 = DimPlot(se, group.by=clustResCol, label=T, reduction=reduc) + NoLegend()
 	p2 = DimPlot(se, group.by="SingleR_label", label=T, label.size=3, reduction="umap") + NoLegend()
+	#p2 = DimPlot(se, group.by="SingleR_label", label=T, label.size=3, reduction=reduc) + NoLegend()
 #	ggsave(filename=plotfile, plot=p2, width=5, height=4, units="in", dpi=300)
 	p3 = DimPlot(se, group.by="orig.ident", shuffle=T, seed=randseed, label=F, reduction="umap") + NoLegend()
+	#p3 = DimPlot(se, group.by="orig.ident", shuffle=T, seed=randseed, label=F, reduction=reduc) + NoLegend()
 	if(type=="combined"){
 		gej_patients <- read.table(file=samplefile,header=T,stringsAsFactors=F)
 		gej_patients <- unique(gej_patients[gej_patients$type=="G",]$patient)
 		se[["cancer_type"]] <- ifelse(se[["orig.ident",drop=T]] %in% gej_patients, "G", "E")
 		p4 = DimPlot(se, group.by="cancer_type", shuffle=T, seed=randseed, label=F, reduction="umap")
+		#p4 = DimPlot(se, group.by="cancer_type", shuffle=T, seed=randseed, label=F, reduction=reduc)
 	}else{
 		p4=plot_spacer()
 	}

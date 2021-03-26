@@ -1,4 +1,4 @@
-#Example: sbatch -p fat_icg -A gaog_g1 --qos=gaogfaticg -N 1 -n 1 -c 48 ./runRscript.sh integrateSubsets_CCA.R ImmuneCells 2000 cca 48
+#Example: sbatch -p fat_icg -A gaog_g1 --qos=gaogfaticg -N 1 -n 1 -c 48 ./runRscript.sh integrateSubsets_CCA.R 
 
 suppressPackageStartupMessages({
         library(Seurat)
@@ -7,34 +7,24 @@ suppressPackageStartupMessages({
 })
 
 args  <- commandArgs(trailingOnly=T)
-celltype <- args[1] #TCells, BCells, Monocytes, ImmuneCells, EpithelialCells, StromalCells
-nFeature <- as.numeric(args[2])
-reduc <- args[3] ##cca or rpca
-nworker <- min(as.numeric(args[4]),length(availableWorkers()))
+obj1_file <- args[1]
+obj2_file <- args[2]
+resfile <- args[3]
+nFeature <- as.numeric(args[4]) #2000
+reduc <- args[5] ##cca or rpca
+nworker <- min(as.numeric(args[6]),length(availableWorkers()))
 plan("multiprocess", workers = nworker)
 options(future.globals.maxSize = 60*1024^3)
-set.seed(1129)
-
-outdir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/Combined/"
-gej_dir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/GEJ_QCed_sctNorm_BatchCCA_clustStab/"
-escc_dir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/data/ESCC_QCed_sctNorm_BatchHmy_clustStab/"
+set.seed(1129L)
 
 obj.list <- list()
-se <- readRDS(file=paste0(gej_dir,celltype,"_sctNorm_BatchHmy.rds"))
-if(reduc=="cca"){
-	se <- DietSeurat(se, assay=c("RNA","SCT"),scale.data=TRUE)
-}else{
-	#"rpca" requires precalcuated pca results
-	se <- DietSeurat(se, assay=c("RNA","SCT"),dimreducs="pca",scale.data=TRUE)
-}
-obj.list[['gej']] <- se
-se <- readRDS(file=paste0(escc_dir,celltype,"_sctNorm_BatchHmy.rds"))
-if(reduc=="cca"){
-	se <- DietSeurat(se, assay=c("RNA","SCT"),scale.data=TRUE)
-}else{
-	se <- DietSeurat(se, assay=c("RNA","SCT"),dimreducs="pca",scale.data=TRUE)
-}
-obj.list[['escc']] <- se
+se <- readRDS(file=obj1_file)
+se <- DietSeurat(se, assay=c("RNA","SCT"),scale.data=TRUE)
+obj.list[[1]] <- se
+rm(se)
+se <- readRDS(file=obj2_file)
+se <- DietSeurat(se, assay=c("RNA","SCT"),scale.data=TRUE)
+obj.list[[2]] <- se
 rm(se)
 
 #Select the most variable features to use for integration
@@ -49,7 +39,10 @@ integ_anchors <- FindIntegrationAnchors(object.list = obj.list, normalization.me
 all_features <- Reduce(intersect, lapply(obj.list, rownames))
 se <- IntegrateData(anchorset = integ_anchors, normalization.method = "SCT", features.to.integrate = all_features, verbose=FALSE)
 
-saveRDS(se, file=paste0(outdir, celltype, "_sctNorm_", toupper(reduc), ".rds"))
+if(!dir.exists(dirname(resfile))){
+        dir.create(dirname(resfile),recursive=T)
+}
+saveRDS(se, file=resfile)
 
 options(future.globals.maxSize = 500*1024^2) #500M
 plan(sequential)
