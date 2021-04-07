@@ -27,7 +27,7 @@ plan("multiprocess", workers = nworker)
 options(future.globals.maxSize = 20*1024^3) #20G
 set.seed(1129)
 
-se <- SCTransform(se, variable.features.n=5000, vars.to.regress = c(regVars, 'cc_difference'))
+se <- SCTransform(se, variable.features.n=3000, vars.to.regress = c(regVars, 'cc_difference'))
 saveRDS(se, file=outfile)
 
 options(future.globals.maxSize = 500*1024^2) #500M

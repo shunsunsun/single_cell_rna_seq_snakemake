@@ -7,8 +7,8 @@ suppressPackageStartupMessages({
 	library(patchwork)
 })
 
-#ref <- "hpca_be_dice_nh_mi"
-ref <- "dice_nh_mi"
+ref <- "hpca_be_dice_nh_mi"
+#ref <- "dice_nh_mi"
 label <- "label.fine" #label.main or label.fine
 refdir <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/resources/SingleRdata"
 samplefile <- "/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/config/sample_cancertype.txt"
@@ -25,17 +25,20 @@ k <- as.numeric(args[5])
 reduc <- args[6]
 assay <- args[7] #SCT or RNA
 object <- args[8] #se (seurat) or sce
+type <- args[9]
 
-if(grepl("Combined", infile)){
-	type="combined"
-}else if(grepl("ESCC",infile)){
-	type="escc"
-}else{
-	type="gej"
+if(length(type)==0){
+	if(grepl("Combined", infile)){
+		type="combined"
+	}else if(grepl("ESCC",infile)){
+		type="escc"
+	}else{
+		type="gej"
+	}
 }
 
-#outfile <- gsub(".rds",paste0("_singleR_",label,".rda"),infile)
-outfile <- gsub(".rds",paste0("_singleR_immu",label,".rda"),infile)
+outfile <- gsub(".rds",paste0("_singleR_",label,".rda"),infile)
+#outfile <- gsub(".rds",paste0("_singleR_immu",label,".rda"),infile)
 plotfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/",
        type, "_", gsub("rda","pdf", basename(outfile)))
 

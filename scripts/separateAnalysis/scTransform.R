@@ -9,7 +9,7 @@ if(!dir.exists(outdir)){
         dir.create(outdir,recursive=T)
 }
 
-regVars=c('mitoCountRatio', 'nFeature_RNA', 'nCount_RNA', 'percent_mito')
+regVars=c('mitoCountRatio', 'nFeature_RNA', 'nCount_RNA', 'percent_mito', 'percent.mt')
 
 nworker <- min(as.numeric(args[3]),length(availableWorkers()))
 #cat(sprintf("Use %d workders\n",nworker))

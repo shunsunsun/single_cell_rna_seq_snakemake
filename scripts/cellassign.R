@@ -7,6 +7,7 @@ sink(log, type="message")
 
 library(SingleCellExperiment)
 library(tensorflow)
+tensorflow::tf_config()
 library(cellassign)
 library(ComplexHeatmap)
 library(viridis)
