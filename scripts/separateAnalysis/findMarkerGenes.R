@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 args  <- commandArgs(trailingOnly=T)
 infile <- args[1]
 sctransform <- args[2] #T or F
-assay_used <- ifelse(sctransform=="T","SCT","RNA")
+assay_used <- ifelse(sctransform=="T","SCT","RNA") #RNA is recommended; I only find SCT significantly different from RNA results and useful for integrated datasets
 affix <- ifelse(sctransform=="T","_sct","")
 outfile1 <- gsub(".rds",paste0(affix,"_conservedMarkers.rda"),infile)
 outfile2 <- gsub(".rds",paste0(affix,"_allMarkers.rda"),infile)
@@ -63,7 +63,7 @@ for(i in unique(se[[clustRes,drop=TRUE]])){
   }
 }
 save(conserved_markers_list, file=outfile1)
-all_markers <- FindAllMarkers(object = se, assay=assay_used, slot="data", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+all_markers <- FindAllMarkers(object = se, assay=assay_used, slot="data", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, )
 save(all_markers, file=outfile2)
 
 options(future.globals.maxSize = 500*1024^2) #500M

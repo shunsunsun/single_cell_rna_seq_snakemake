@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 args  <- commandArgs(trailingOnly=T)
 infile <- args[1]
 sctransform <- args[2] #T or F
-assay_used <- ifelse(sctransform=="T","SCT","RNA")
+assay_used <- ifelse(sctransform=="T","SCT","RNA") #RNA is recommended; I only find SCT useful for integrated datasets
 outfile <- args[3]
 
 subsets <- unlist(strsplit(args[4],","))

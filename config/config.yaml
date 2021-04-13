@@ -13,6 +13,7 @@ dir:
   qc: plot/qc
   plot: plot
   resources: resources
+  scripts: scripts
 
 # qc strategy
 qc:
@@ -20,7 +21,7 @@ qc:
   cal_outlyingness: false
   #target: merged
   target: outlyflted
-  strategy: outlier
+  strategy: pipe
   nCell: 10
   nUMI_lo: 1000
   nUMI_up: 100000
@@ -36,6 +37,7 @@ norm:
   maxPC: 30
   perSample: true  #sample-level normalization then integrate
   findAnchor: rpca
+  method: sctNorm
 
 # batch correction
 batchRm:
@@ -46,13 +48,23 @@ batchRm:
 stable:
   subsample_rate: 0.8
   num_of_subsample: 20
-  subsample_k: 10,20,30
-  subsample_resolution: 0.8,1,1.2
+  #subsample_k: 50
+  subsample_k: 20,50,80 
+  #subsample_k: 50,100,150
+  subsample_resolution: 0.2,0.4,0.6,0.8,1
+  #subsample_resolution: 0.05,0.15,0.25
+  #subsample_resolution: 0.05
   subsample_pc: 10,30,50
+  #subsample_pc: 10,20
+  #subsample_pc: 20
   PreprocessSubsetData_subsample_pars: "variable.features.n = 3000, score.thresh = 1e-5, n.start = 100, nn.eps = 0"
-  input_seurat: data/GEJ_QCed_sctNorm_BatchCCA.rds
-  #input_seurat: data/ESCC_QCed_sctNorm_BatchHmy.rds
-  #input_seurat: data/GEJ_QCed_sctNorm_BatchHmy.rds
+  #input_seurat: GEJ_QCed_sctNorm_BatchCCA
+  stability_dimReduct: "reduc=\"pca\""
+  #input_seurat: ESCC_QCed_sctNorm_BatchHmy
+  input_seurat: ESCC_14patients_TDN
+  #input_seurat: ESCC_jiaoda_GSE145370
+  #stability_dimReduct: "reduc=\"harmony\""
+  #stability_dimReduct: "reduc=\"glmpca\""
 
 # Comment out to not assign cell type via signatures
 celltype:
