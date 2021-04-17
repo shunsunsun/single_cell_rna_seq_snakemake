@@ -63,7 +63,7 @@ for(i in unique(se[[clustRes,drop=TRUE]])){
   }
 }
 save(conserved_markers_list, file=outfile1)
-all_markers <- FindAllMarkers(object = se, assay=assay_used, slot="data", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, )
+all_markers <- FindAllMarkers(object = se, assay=assay_used, slot="data", only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 save(all_markers, file=outfile2)
 
 options(future.globals.maxSize = 500*1024^2) #500M

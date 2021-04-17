@@ -15,7 +15,7 @@ se <- readRDS(file=infile)
 
 if(step==1){
   for(pc in c(10,30)){
-     for(k in c(20,50,80)){
+     for(k in c(30,60,90)){
 	label <- paste0("pca",pc,"_snn",k)
 	p <- clustree(se, prefix=paste0(label,"_res."),edge_width=0.8,node_alpha = 0.8) + 
 		scale_color_brewer(palette = "Set1") + theme(legend.position = "bottom") + 

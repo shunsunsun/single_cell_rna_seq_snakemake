@@ -8,11 +8,14 @@ suppressPackageStartupMessages({
 args  <- commandArgs(trailingOnly=T)
 infile <- args[1]
 outfile <- args[2]
-nHVG <- 2000
+nHVG <- 3000
 ndims <- c(10,20) 
 set.seed(1129)
 
 se <- readRDS(file=infile)
+DefaultAssay(se) <- "RNA"
+se <- DietSeurat(se, assays="RNA")
+
 m <- GetAssayData(se, slot = "counts", assay = "RNA")
 devs <- scry::devianceFeatureSelection(m)
 dev_ranked_genes <- rownames(se)[order(devs, decreasing = TRUE)]

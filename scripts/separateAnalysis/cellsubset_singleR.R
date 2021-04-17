@@ -114,7 +114,9 @@ plotfile <- paste0("/gpfs2/gaog_pkuhpc/users/liny/GEJ_singleCell/plot/cellident/
 		p4 = DimPlot(se, group.by="cancer_type", shuffle=T, seed=randseed, label=F, reduction="umap")
 		#p4 = DimPlot(se, group.by="cancer_type", shuffle=T, seed=randseed, label=F, reduction=reduc)
 	}else{
-		p4=plot_spacer()
+		#p4=plot_spacer()
+		se$condition=ifelse(grepl("N", se$orig.ident), "N", "T")
+		p4 = DimPlot(se, group.by="condition", shuffle=T, seed=randseed, label=F, reduction="umap")                
 	}
 	#save(p1, p2, p3, p4, file=tmpfile)
 	p = (p1 + p2) / (p3 + p4)
